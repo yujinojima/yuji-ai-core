@@ -112,6 +112,7 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 | [rsi-oversold-mean-reversion](freqtrade/prims/naive/rsi-oversold-mean-reversion.md) | RSI(14) < 30 → long if reaction accepted | guess | assumed | YujiMultiSignalStrategy.py buy_1; YujiRegimeStrategy.py range_entry |
 | [ema-pullback-dynamic-support](freqtrade/prims/naive/ema-pullback-dynamic-support.md) | EMA alignment >= 3 + price touches 21 EMA + bullish candle + MACD hist rising → long if held | guess | assumed | YujiTrendRiderStrategy.py buy_pullback (lines 184–192) |
 | [liquidity-sweep-reversal](freqtrade/prims/naive/liquidity-sweep-reversal.md) | Wick below swing low + close back above + bullish candle + CVD positive → long if accepted | guess | assumed | YujiSmartMoneyStrategy.py (lines 179–187) |
+| [bullish-rsi-divergence](freqtrade/prims/naive/bullish-rsi-divergence.md) | Price rolling-low LL + RSI(14) rolling-low HL (>= 5pt) + RSI < 40 + close < BB mid + stoch turning up → long. **Rare signal (0.8% of candles). PMC9920669 rates it LEAST EFFECTIVE RSI variant; counterproductive on rising BTC/ETH.** | guess→hypothesis | assumed | YujiDivergenceStrategy.py (lines 107–190) |
 
 ### Intermediate
 | Name | Rule | Certainty | Reaction Validated | File |
