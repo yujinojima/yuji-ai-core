@@ -50,17 +50,21 @@
 - **Last validated:** never (needs own-data backtest with full filter set)
 
 ## liquidity-sweep-reversal (naive → intermediate)
-- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+- **Status:** SUPERSEDED by sophisticated prim. See sophisticated entry below.
 
-## liquidity-sweep-reversal (intermediate) — 2026-04-10
-- **Works when:** RANGING-TO-MILD-TREND regime (ADX < 30); near VP level (POC/VAL — POC reversion 75%+ WR in ranging); wick >= 0.3% below swing low (filters noise wicks); CVD delta positive+rising, ideally divergent (price LL, CVD HL — 65-75% reversal rate); volume > 0.8x SMA on sweep candle (> 1.2x preferred); bullish close above swing low; next-candle confirmation (raises WR from ~50% to 55-60%); high-liquidity pair (BTC, ETH)
-- **Fails when:** Strong trend (ADX > 35) — **#1 failure mode: sweeps become genuine breakdowns, not traps**; consecutive sweeps at same level (support breaking); no CVD confirmation (dead-cat bounce); low volume sweep (noise wick); thin order book alts (fake sweeps wander); 5m timeframe (noise); no VP level nearby (no structural significance); news-driven capitulation
-- **Best pair(s):** BTC/USDT, ETH/USDT (institutional flow, deep books, meaningful stop clusters)
-- **Best timeframe:** 1h-4h (most reliable) > 15m (entry precision within HTF context) > avoid 5m
-- **Critical finding:** Liquidity sweep is the RANGING/TRANSITIONAL regime complement — different mechanism from RSI mean reversion (oscillator exhaustion) and EMA pullback (trend continuation). Edge = trapped agents at structural levels. Weekly BTC SFP shows 91% success (n=22), but 4H SFP only 55-60% WR with confirmation. VP proximity is the strongest filter (75%+ WR at POC).
-- **Evidence:** EUR/USD liquidity pool study (ResearchGate 2024, 84 days); BTC weekly SFP (Benzinga 2026, n=22); CVD divergence studies (S&P E-mini, 65-75%); VP POC reversion (FuturesHive, 75%+ WR); SMC backtest consensus (60-70% WR with confirmation)
-- **Implementation gaps:** YujiSmartMoneyStrategy needs: (1) ADX < 30 regime filter, (2) next-candle confirmation via sweep_bullish.shift(1), (3) CVD divergence check, (4) stronger volume threshold on sweep candle, (5) evaluate secondary entry quality (drops VP requirement)
-- **Last validated:** never (needs backtest with regime filter + next-candle confirmation)
+## liquidity-sweep-reversal (intermediate → sophisticated)
+- **Status:** SUPERSEDED by sophisticated prim. See sophisticated entry below.
+
+## liquidity-sweep-reversal (sophisticated) — 2026-04-10
+- **Works when:** RANGING-TO-MILD-TREND regime (ADX < 30); wick >= 0.3% below clear 5-bar swing low; bullish close back above within 1–2 candles; **next-candle confirmation (+5–10pp WR)**; volume > 1.2x SMA(20) on sweep candle; CVD divergence present as **filter only** (price LL + CVD HL); within 2% of VP POC/VAL; BTC/ETH on 1h–4h; fixed stop below wick low; R:R >= 1:2; no macro event in next 2h
+- **Fails when:** Strong trend (ADX > 35) — **#1 failure mode: sweeps become genuine breakdowns**; **CVD in isolation** (2018–2024 backtests confirm underperformance vs filter use); consecutive sweeps at same level (support genuinely breaking); no VP anchor (drops ~20pp WR); same-candle entry (drops 5–10pp WR); ATR trailing stop (by analogy to sister prim); low-liquidity alts (thin books produce fake sweeps); 5m TF (noise); news capitulation; parameter curve-fit without walk-forward; SMC automation gap (~30% of visual setups missed by mechanical 5-bar pivot)
+- **Best pair(s):** BTC/USDT, ETH/USDT (institutional flow, meaningful stop clusters; 73% of liquidations cluster within 2% of swing levels)
+- **Best timeframe:** 1h–4h (highest SFP reliability) > 15m entry precision within HTF context > avoid 5m
+- **Key numbers:** **WR 68% (n=2,847 BTC/ETH/alts 2022–2025), PF 1.92** with volume confirmation; realistic **live WR 55–62%** after OOS degradation (McLean-Pontiff: 26% lower OOS, 58% post-publication — expect Sharpe /2 to /3); ~40% base-rate failure floor (textbook setups); naked POC revisit ~80% within 10 sessions; VP POC reversion 75%+ WR in ranging; "perfect HTF SFPs" 85–95% selection-biased upper bound; live BTC SMC leaderboard strategy PF 1.51 (n=82)
+- **Critical findings:** (1) SFP is the **first large-sample quantitative anchor** for this prim (n=2,847 vs prior n=22 at intermediate). (2) **CVD is a filter, not a trigger** — in-isolation use underperforms. (3) **73% of liquidation events occur within 2% of swing levels** — mechanistic justification for stop-cluster mechanism. (4) Walk-forward studies show regime-gated pattern strategies that outperformed in 2020 **collapsed in 2021** — plan for regime-change failure. (5) Parameter sensitivity is HIGH (FMZQuant); wick depth, swing lookback, volume multiplier all curve-fit easily. (6) SMC/ICT is inherently hard to fully automate — mechanical approximations capture ~70% of visual setups.
+- **Evidence:** 9 independent sources — QuantVPS SFP backtest (n=2,847), QuantVPS liquidation clustering, Morpher SFP, LuxAlgo SFP, Bookmap CVD 2018–2024, Buildix VP naked POC 80%, HorizonAI SMC live benchmark, QuantPedia + arxiv 2602.10785 walk-forward/OOS degradation, FMZQuant ATR-contrarian parameter sensitivity
+- **Implementation gaps:** YujiSmartMoneyStrategy needs: (1) ADX < 30 regime gate, (2) next-candle confirmation via `sweep_bullish.shift(1)`, (3) CVD as divergence filter not trigger, (4) volume threshold 0.8x → 1.2x SMA, (5) wick depth >= 0.3% enforcement, (6) fixed stop below wick low (NOT ATR trail), (7) R:R >= 1:2 target logic, (8) pair whitelist BTC/ETH only, (9) drop secondary entry (no-VP), (10) walk-forward optimization before deployment
+- **Last validated:** never (needs own-data walk-forward backtest with full 10-filter set)
 
 ---
 

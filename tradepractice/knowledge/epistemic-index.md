@@ -124,6 +124,7 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 | Name | Rule | Certainty | Reaction Validated | File |
 |------|------|-----------|-------------------|------|
 | [ema-pullback-dynamic-support](freqtrade/prims/sophisticated/ema-pullback-dynamic-support.md) | EMA alignment >= 3 + ADX 25–35 (rising) + **first pullback to 21 EMA only** + 4h bullish + bullish candle + MACD hist rising + RSI 40–65 + volume > 0.8x SMA + fixed stop below swing low → long. **TRENDING only. 8-source evidence base. PF ~2.0, WR ~48%, 25–50% OOS degradation expected. ATR trailing stop DESTROYS edge (PF 0.603).** | evidence | assumed | YujiTrendRiderStrategy.py buy_pullback |
+| [liquidity-sweep-reversal](freqtrade/prims/sophisticated/liquidity-sweep-reversal.md) | Wick >= 0.3% below swing low + bullish close + next-candle confirmation + CVD divergence (filter only) + volume > 1.2x SMA + within 2% of VP POC/VAL + ADX < 30 + BTC/ETH + fixed stop below wick low + R:R >= 1:2 → long. **RANGING-TO-MILD-TREND only. 9-source evidence base. WR 68% n=2,847 (BTC/ETH/alts 2022–2025), PF 1.92. Realistic live WR 55–62% after OOS degradation. CVD alone underperforms; strong trend = genuine breakdown.** | evidence | assumed | YujiSmartMoneyStrategy.py buy_sweep |
 
 ---
 
