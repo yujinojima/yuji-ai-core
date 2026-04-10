@@ -45,13 +45,18 @@
 - **Implementation gaps:** YujiTrendRiderStrategy needs: (1) ADX rising check, (2) ADX < 35 ceiling, (3) volume filter on buy_pullback
 - **Last validated:** never (needs backtest with ADX direction + ceiling filters)
 
-## liquidity-sweep-reversal (naive)
-- **Works when:** Price near VP level (POC or VAL); clear prior swing low with stop clusters; CVD delta positive and rising; volume > 0.8x 20-SMA; ranging to mildly trending regime
-- **Fails when:** Strong macro downtrend (4h bearish); no CVD confirmation after sweep; low volume sweep (noise); multiple consecutive sweeps at same level (genuine breakdown); no nearby VP level
-- **Best pair(s):** untested — hypothetically better on liquid pairs (BTC/USDT, ETH/USDT) with institutional flow
-- **Best timeframe:** 15m (YujiSmartMoneyStrategy); likely too noisy on 5m
-- **Evidence:** code extraction only — no backtest
-- **Last validated:** never
+## liquidity-sweep-reversal (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## liquidity-sweep-reversal (intermediate) — 2026-04-10
+- **Works when:** RANGING-TO-MILD-TREND regime (ADX < 30); near VP level (POC/VAL — POC reversion 75%+ WR in ranging); wick >= 0.3% below swing low (filters noise wicks); CVD delta positive+rising, ideally divergent (price LL, CVD HL — 65-75% reversal rate); volume > 0.8x SMA on sweep candle (> 1.2x preferred); bullish close above swing low; next-candle confirmation (raises WR from ~50% to 55-60%); high-liquidity pair (BTC, ETH)
+- **Fails when:** Strong trend (ADX > 35) — **#1 failure mode: sweeps become genuine breakdowns, not traps**; consecutive sweeps at same level (support breaking); no CVD confirmation (dead-cat bounce); low volume sweep (noise wick); thin order book alts (fake sweeps wander); 5m timeframe (noise); no VP level nearby (no structural significance); news-driven capitulation
+- **Best pair(s):** BTC/USDT, ETH/USDT (institutional flow, deep books, meaningful stop clusters)
+- **Best timeframe:** 1h-4h (most reliable) > 15m (entry precision within HTF context) > avoid 5m
+- **Critical finding:** Liquidity sweep is the RANGING/TRANSITIONAL regime complement — different mechanism from RSI mean reversion (oscillator exhaustion) and EMA pullback (trend continuation). Edge = trapped agents at structural levels. Weekly BTC SFP shows 91% success (n=22), but 4H SFP only 55-60% WR with confirmation. VP proximity is the strongest filter (75%+ WR at POC).
+- **Evidence:** EUR/USD liquidity pool study (ResearchGate 2024, 84 days); BTC weekly SFP (Benzinga 2026, n=22); CVD divergence studies (S&P E-mini, 65-75%); VP POC reversion (FuturesHive, 75%+ WR); SMC backtest consensus (60-70% WR with confirmation)
+- **Implementation gaps:** YujiSmartMoneyStrategy needs: (1) ADX < 30 regime filter, (2) next-candle confirmation via sweep_bullish.shift(1), (3) CVD divergence check, (4) stronger volume threshold on sweep candle, (5) evaluate secondary entry quality (drops VP requirement)
+- **Last validated:** never (needs backtest with regime filter + next-candle confirmation)
 
 ---
 
@@ -64,3 +69,20 @@
 - **Best timeframe:** real-time orderbook (opportunities are fleeting)
 - **Evidence:** code extraction only — no live trades
 - **Last validated:** never
+
+## spread-capture-market-making (naive) — 2026-04-10
+- **Works when:** Spread $0.03–$0.15; liquidity >= $5k; stable/uncertain market (YES ~$0.30–$0.70); balanced order flow; no imminent resolution; no major news catalyst
+- **Fails when:** Spread < $0.03 (fees consume profit); spread > $0.15 (illiquid/toxic); information event imminent (adverse selection); one-sided flow; market trending toward resolution; competing MM bots with queue priority
+- **Best pair(s):** Active binary markets with moderate uncertainty
+- **Best timeframe:** Continuous limit orders
+- **Evidence:** Code extraction only — no live trades or backtests
+- **Critical unknowns:** No inventory management (unbounded directional exposure from partial fills); no adverse selection defence; no order cancellation/refresh; fee impact unquantified; ORDER_SIZE=10 is fixed regardless of conditions
+- **Last validated:** never
+
+## spread-capture-market-making (naive) — 2026-04-10
+- Works when: Spread $0.03–$0.15, liquidity >= $5k, balanced flow, stable market
+- Fails when: Narrow spread (<fees), toxic flow, one-sided volume, imminent resolution
+- Last validated: never
+
+---
+

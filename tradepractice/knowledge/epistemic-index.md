@@ -118,6 +118,7 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 |------|------|-----------|-------------------|------|
 | [rsi-oversold-mean-reversion](freqtrade/prims/intermediate/rsi-oversold-mean-reversion.md) | RSI(14) < 30 + RANGING regime (ADX < 20) + price > 1h EMA200 + confirming oscillator + volume → long to BB middle. **Does NOT work in trending crypto markets.** | hypothesis | assumed | YujiRegimeStrategy.py range_entry (lines 185–194) |
 | [ema-pullback-dynamic-support](freqtrade/prims/intermediate/ema-pullback-dynamic-support.md) | EMA alignment >= 3 + ADX 25–35 (rising) + first/second pullback to 21 EMA + 4h bullish + bullish candle + MACD hist rising → long. **TRENDING regime only. Mirror complement to RSI mean reversion.** | hypothesis | assumed | YujiTrendRiderStrategy.py buy_pullback (lines 193–202) |
+| [liquidity-sweep-reversal](freqtrade/prims/intermediate/liquidity-sweep-reversal.md) | Wick >= 0.3% below swing low + close above + CVD divergence + near VP level (POC/VAL) + volume spike + **RANGING-TO-MILD-TREND regime (ADX < 30)**. Exploits trapped breakout shorts at structural levels. | hypothesis | assumed | YujiSmartMoneyStrategy.py (lines 188–197) |
 
 ### Sophisticated
 <!-- Auto-populated by tradepractice analyst -->
@@ -130,6 +131,7 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 | Name | Rule | Certainty | Reaction Validated | File |
 |------|------|-----------|-------------------|------|
 | [binary-arb-completeness](polymarket/prims/naive/binary-arb-completeness.md) | YES+NO < $0.995 → buy both sides for risk-free profit if both fill | hypothesis | assumed | src/strategies/arb.py |
+| [spread-capture-market-making](polymarket/prims/naive/spread-capture-market-making.md) | Spread $0.03–$0.15 + liquidity >= $5k → place inside-spread limit orders on both sides to capture spread | guess | assumed | src/strategies/spread.py |
 
 ### Intermediate
 <!-- Auto-populated by tradepractice analyst -->
