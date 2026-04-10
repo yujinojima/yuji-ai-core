@@ -32,13 +32,18 @@
 - **Implementation note:** YujiRegimeStrategy already regime-gates correctly. YujiMultiSignalStrategy buy_1 LACKS regime gate — primary fix needed.
 - **Last validated:** never (regime-gated version needs backtest)
 
-## ema-pullback-dynamic-support (naive)
-- **Works when:** EMA alignment >= 3 (EMA8 > EMA21 > EMA50 > EMA100); ADX > 20; 4h EMA50 > EMA200 (higher-timeframe bullish); RSI 40–65 (mid-range, not overbought or broken); price has not tested 21 EMA more than 2x in last 20 candles
-- **Fails when:** EMA alignment <= 2 (trend weakening or absent); ADX < 18 (choppy); 4h bearish EMA cross; RSI < 35 (breakdown not pullback); 3+ 21 EMA tests in 20 candles (level losing support significance)
-- **Best pair(s):** untested
-- **Best timeframe:** untested — implemented on 1h in YujiTrendRiderStrategy; likely noisy on 15m
-- **Evidence:** code extraction only — no backtest
-- **Last validated:** never
+## ema-pullback-dynamic-support (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## ema-pullback-dynamic-support (intermediate) — 2026-04-10
+- **Works when:** TRENDING regime only (ADX 25–35, rising); EMA alignment >= 3 (8 > 21 > 50 > 100); 4h EMA50 > EMA200; RSI 40–65; first or second pullback to 21 EMA (<=2 touches in 20 candles); volume > 0.8x SMA(20); bullish candle + MACD hist rising
+- **Fails when:** RANGING regime (ADX < 20, flat EMA ribbon) — **#1 failure mode; crypto spends ~60% of time here**; ADX > 35 (trend exhaustion/reversal risk); 3+ EMA21 tests (level degraded); 4h bearish (EMA50 < EMA200); RSI < 35 or > 70; low volume pullback; parabolic move skipping EMA
+- **Best pair(s):** BTC/USDT, ETH/USDT (institutional trend-following flow)
+- **Best timeframe:** 1h (PF ~2.0, best signal-to-noise) > 30m (PF 2.01) > avoid 5m
+- **Critical finding:** EMA pullback is the TRENDING-ONLY complement to RSI mean reversion (RANGING-ONLY). Raschke Holy Grail confirms first pullback after ADX > 30 is highest-probability setup. IEEE paper shows EMA crypto: PF 3.5, WR 60%.
+- **Evidence:** IEEE paper (2024) + Raschke Holy Grail + community backtests (PakunFX PF 1.965, BTC 30m PF 2.01)
+- **Implementation gaps:** YujiTrendRiderStrategy needs: (1) ADX rising check, (2) ADX < 35 ceiling, (3) volume filter on buy_pullback
+- **Last validated:** never (needs backtest with ADX direction + ceiling filters)
 
 ## liquidity-sweep-reversal (naive)
 - **Works when:** Price near VP level (POC or VAL); clear prior swing low with stop clusters; CVD delta positive and rising; volume > 0.8x 20-SMA; ranging to mildly trending regime

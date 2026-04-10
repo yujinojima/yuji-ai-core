@@ -117,6 +117,7 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 | Name | Rule | Certainty | Reaction Validated | File |
 |------|------|-----------|-------------------|------|
 | [rsi-oversold-mean-reversion](freqtrade/prims/intermediate/rsi-oversold-mean-reversion.md) | RSI(14) < 30 + RANGING regime (ADX < 20) + price > 1h EMA200 + confirming oscillator + volume → long to BB middle. **Does NOT work in trending crypto markets.** | hypothesis | assumed | YujiRegimeStrategy.py range_entry (lines 185–194) |
+| [ema-pullback-dynamic-support](freqtrade/prims/intermediate/ema-pullback-dynamic-support.md) | EMA alignment >= 3 + ADX 25–35 (rising) + first/second pullback to 21 EMA + 4h bullish + bullish candle + MACD hist rising → long. **TRENDING regime only. Mirror complement to RSI mean reversion.** | hypothesis | assumed | YujiTrendRiderStrategy.py buy_pullback (lines 193–202) |
 
 ### Sophisticated
 <!-- Auto-populated by tradepractice analyst -->
