@@ -119,7 +119,10 @@
 - **Implementation gaps:** Current `src/strategies/spread.py` needs: (1) fee-aware category filter, (2) inventory tracking + Avellaneda-Stoikov skew in logit space, (3) adverse selection guard (cancel-on-move), (4) time-to-resolution filter (no quotes <24h to settlement), (5) refresh cycle 30s → 500ms, (6) dynamic order sizing scaling with spread/depth, (7) maker rebate accounting
 - **Last validated:** never (needs paper-trading backtest with full filter set)
 
-## ensemble-forecast-edge (naive) — 2026-04-10
+## ensemble-forecast-edge (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## ensemble-forecast-edge (naive) — 2026-04-10 [historical]
 - **Works when:** GFS ensemble well-calibrated for city/season; market illiquid (casual bettors); 1-3 day horizon (peak ensemble skill); bracket boundaries within ensemble spread; liquidity >= $500; uncertain market (YES $0.20-$0.80)
 - **Fails when:** Market already efficient (sophisticated bettors/bots); forecast horizon > 5 days; extreme weather (model underdispersion); tail brackets (30-member sample too small); station-vs-gridpoint bias; GFS systematic bias for geography
 - **Best pair(s):** Weather temperature bracket markets on Polymarket
@@ -127,6 +130,17 @@
 - **Evidence:** Code extraction only — no live trades or backtests
 - **Critical unknowns:** Single model (no ECMWF/NAM blend); no calibration layer; 30 members gives coarse probability resolution (3.3% per member); no ensemble spread confidence check; station-model mismatch unquantified; execution costs vs edge unquantified
 - **Last validated:** never
+
+## ensemble-forecast-edge (intermediate) — 2026-04-10
+- **Works when:** ≥ 2 NWP models in consensus (must include GFS + ECMWF); 1–2 days to resolution (edge ≥ 5%) or 3–5 days (edge ≥ 10%); Gaussian bracket probability `Φ((high−μ)/σ) − Φ((low−μ)/σ)` > market YES + threshold; model run age < 6h; bracket bounds ≥ 1°C wide; market liquidity ≥ $1,000; YES price NOT a tail ($0.05–$0.95); major-city markets with dense NWP training data
+- **Fails when:** Single-model signal (no confirmation) — **#1 systematic failure mode from naive**; station-gridpoint mismatch (resolution station ≠ model gridpoint used); all models underdispersive for city/season (correlated model failure); extreme/convective weather (ensemble spread collapses artificially); day 5+ forecasts (skill degrades toward climatology); tail brackets (probability estimate unreliable); market already priced efficiently (competing bots absorbed edge); model run > 6h stale; fee-adjusted edge ≤ 0 (5% weather category taker fee)
+- **Best markets:** Major city daily high temperature brackets — London, New York, Seoul; geopolitics fee category (0%) unavailable for weather; weather category ~5% taker fee must be subtracted from edge
+- **Best timeframe:** 1–2 days to resolution; execute within 2h of 00z/12z ECMWF update or 00z/06z/12z/18z GFS update
+- **Key numbers:** 3+ model consensus → 70–90% accuracy at day-1–2 (practitioner data: Njuguna, PolyMaster); top traders 70–75% WR on short-term temperature; $1k → $24k (London single-bot); $65k profit (NY/London/Seoul); raw GEFS underdispersive — EMOS/NGR calibration reduces CRPS ~15–25% (AMS MWR 2008); ECMWF maintains ~1 day lead time advantage over GFS; naive MIN_EDGE=0.08 is between correct thresholds (5% day 1–2, 10% day 3–5) — horizon-unaware
+- **Critical findings:** (1) Raw GEFS member count (3.3%/member) is NOT calibrated probability — ensemble is systematically underdispersive; must use Gaussian Φ-formula from ensemble mean/std. (2) Station-gridpoint mismatch is the primary systematic failure mode — model gridpoint vs ASOS resolution station can differ by 10–30km, introducing up to 3–5°C mean temperature bias in complex terrain. (3) ECMWF is the higher-skill anchor; GFS serves as confirmation. (4) Fee-adjusted edge = model_prob − market_price − 0.05 (weather category) — minimum tradeable edge is ~7% gross for day 1–2 after fees. (5) Market efficiency guard: if bid-ask spread < $0.03 with large depth, competing bots have already absorbed the edge.
+- **Evidence:** 4 sources — Ezekiel Njuguna/DevGenius (practitioner, multiple bots, Feb 2026), PolyMaster Medium (station-to-Polymarket methodology), AMS MWR 2008 (GFS/ECMWF calibration, Hamill et al.), Degen Doppler / WeatherEdge tool infrastructure
+- **Implementation gaps:** `src/weather/strategy.py` needs: (1) Gaussian bracket probability replacing raw member count, (2) ECMWF integration (Copernicus CDS API), (3) horizon-gated thresholds (5%/10%), (4) station-gridpoint nearest-neighbor correction, (5) model staleness guard (reject if run age > 6h), (6) fee-adjusted net edge computation
+- **Last validated:** never (needs 100+ trade sample with station-matched resolution data)
 
 ## fractional-kelly-sizing (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
