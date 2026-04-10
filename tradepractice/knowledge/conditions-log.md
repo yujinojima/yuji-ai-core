@@ -121,13 +121,19 @@
 
 ## Polymarket Conditions
 
-## binary-arb-completeness (naive) — 2026-04-10
-- **Works when:** YES+NO price sum < $0.995; both sides have depth; market liquidity > $10k; low arb bot competition
-- **Fails when:** Gap < execution fees; only one leg fills (partial execution); market voided; gap closes before second leg
-- **Best pair(s):** all binary Polymarket markets
-- **Best timeframe:** real-time orderbook (opportunities are fleeting)
-- **Evidence:** code extraction only — no live trades
-- **Last validated:** never
+## binary-arb-completeness (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## binary-arb-completeness (intermediate) — 2026-04-11
+- **Works when:** Binary-only market (neg_risk=False); `gross_gap ≥ 2 × fee_rate[category] × p × (1−p) + 0.005`; gap age < 90s at discovery; both sides have depth ≥ position_size; liquidity ≥ $10k; no voiding signal
+- **Fails when:** Gap stale >90s (bots absorbed or structural trap); partial fill on second leg (directional binary exposure); market voided after first leg fills; neg_risk multi-outcome market (N-leg atomicity); fee_rate miscalculated (category not fetched); lockup cost exceeds net edge on long-dated markets with thin gaps; competitor bot already priced parity
+- **Category min edges** (at p=0.50): geopolitics $0.005, sports $0.020, politics/finance $0.025, weather $0.030, crypto $0.041
+- **Best markets:** Geopolitics (0% fee — pure gap arbitrage, any positive margin works); political binary markets (4% fee, 2.5%+ gap needed)
+- **Best timeframe:** Real-time; gap-to-submission pipeline < 2s; less-liquid leg first, second leg within 5s or cancel-and-unwind
+- **Key numbers:** Lockup cost 0.0137%/day (5% risk-free annualized); 7-day market 2% net gap → 104% APY; 30-day market 2% net gap → 24.3% APY
+- **Evidence:** fee formula from docs.polymarket.com (verified cycle 6) + derived calculations; zero live trades
+- **Implementation gaps:** category field not fetched, gap timestamp not tracked, neg_risk not filtered, partial-fill recovery not implemented
+- **Last validated:** never (paper-trade scanner needed — 30-day minimum sample)
 
 ## spread-capture-market-making (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
