@@ -1,91 +1,102 @@
 ---
-name: hidden-bullish-rsi-divergence
-level: intermediate
-project: freqtrade
-parent_prim: naive/hidden-bullish-rsi-divergence
-created: 2026-04-11
-last_validated: never
+from: analyst
+subject: analyst-result
+timestamp: 2026-04-11T07:13:06+10:00
+cycle: 16
+---
+
 ---
 
 ## Prim: hidden-bullish-rsi-divergence
 **Level:** intermediate (refined from naive)
 **Project:** freqtrade
 **Parent:** naive/hidden-bullish-rsi-divergence
-**Companion:** intermediate/bullish-rsi-divergence (regular div, exhaustion regime — mutually exclusive by regime)
 
 ### Rule
-**EMA ribbon ≥ 3 aligned** + ADX 20–45 rising + price > 1h EMA200 + **true 5-bar pivot pair** (8–40 candle separation) with price HL + RSI(14) LL (≥ 3pt gap, **RSI LL ≥ 30** — below 30 = regular-div territory, regime conflict) + **Fibonacci pullback ≤ 50% of prior impulse** + **MACD hist ≥ 0 at pivot-2** + **volume declining across pivots** + **next-candle confirmation** (close > pivot-2 close) + **hard mutual exclusivity** (reject if regular-div signal active same pair same candle) + 4h primary TF + fee-adjusted R:R ≥ 1:1.5 → long to prior swing high, stop below pivot-2 low.
+**EMA ribbon ≥ 3 aligned** + ADX 20–45 rising + price > 1h EMA200 + **true 5-bar pivot pair** (8–40 candle separation) with price HL + RSI(14) LL (≥ 3pt gap, **RSI LL ≥ 30** — below 30 = regular-div territory conflict) + **Fibonacci pullback ≤ 50% of prior impulse** + **MACD hist ≥ 0 at pivot-2** + **volume declining across pivots** + **next-candle confirmation** + **hard mutual exclusivity** (reject if regular-div active same pair) + 4h primary + fee-adjusted R:R ≥ 1:1.5 → long to prior swing high.
 
-### Mechanism
-In an established uptrend, counter-trend shorts enter on a pullback expecting trend reversal. The oscillator marks a new low (RSI LL) — appearing to confirm their position — but price holds a higher low (HL), revealing the seller cohort is too thin to break structure. Counter-trend shorts are trapped; their forced covers + trend-following re-entries fuel the next impulse leg. Edge disappears when the pullback is too deep (>50% Fibonacci) because the trend structure is genuinely compromised, or when MACD is below zero because bearish momentum is dominant regardless of the oscillator divergence.
+### What Changed from Naive
 
-### Conditions
-- **Works when:** EMA ribbon ≥ 3 aligned and rising; ADX 20–45 and rising (not just threshold); prior impulse leg clearly visible; corrective pullback ≤ 50% of that impulse; RSI LL occurs between 30–55 during pullback; MACD histogram ≥ 0 (trend momentum positive); volume at pivot-2 < volume at pivot-1; 4h primary; BTC/ETH or major alts in established bull phase
-- **Fails when:** Nascent reversal misclassified as uptrend (**#1 failure mode** — hidden div without genuine trend becomes a bull trap); ADX < 20 (no trend) or ADX > 45 (parabolic — pullback entries ill-timed); RSI LL < 30 (overlap with regular-div exhaustion regime — regime partition conflict); pullback > 50% of prior impulse (trend structure breaking); MACD hist < 0 at pivot-2 (bearish momentum dominant); volume rising on pullback (distribution, not shallow correction); EMA ribbon degrading even if still aligned; hard mutual exclusivity violated (regular-div signal also active = conflicted regime detection)
-- **Best pairs:** BTC/USDT, ETH/USDT in confirmed uptrend — exactly the pairs sister prim intermediate EXCLUDES via persistent-uptrend filter
-- **Best timeframe:** 4h primary (convergent: FXOpen, ACY, Babypips, Alchemy Markets all specify 4h/daily for hidden div; 1h secondary; no sub-1h)
+| Dimension | Naive | Intermediate |
+|---|---|---|
+| Pivot detection | rolling 5-bar min/max | **True 5-bar pivot** (argrelextrema, left/right bar confirmed) |
+| Pivot separation | 5–30 candles | **8–40 candles** |
+| RSI range | ≥ 3pt LL | ≥ 3pt LL **AND RSI LL ≥ 30** (below 30 = exhaustion, regime conflict with regular div) |
+| Trend quality | EMA50>EMA200 + ADX≥20 | **EMA ribbon ≥ 3 layers aligned + ADX rising** (direction, not just threshold) |
+| Pullback depth | close > pivot-2 low | **Fibonacci ≤ 50% of prior impulse** (structure integrity filter) |
+| MACD | not required | **MACD hist ≥ 0** at pivot-2 (bullish momentum dominant) |
+| Volume | not specified | **Declining across pivots** (weak-seller confirmation) |
+| Confirmation | same-candle | **Next-candle**: close > pivot-2 close |
+| Mutual exclusivity | flag only | **Hard exclusion** from entry when regular-div signal active |
+| Timeframe | untested | **4h primary** (convergent practitioner consensus) |
+| ADX ceiling | none | **ADX ≤ 45** (parabolic exclusion) |
+| R:R gate | implied | **fee-adjusted ≥ 1:1.5** |
+| Certainty | guess | **hypothesis** |
 
-### Evidence
-- **Source:** anecdote → hypothesis (4 convergent practitioner sources + mechanism derivation from sister-prim evidence chain)
-- **Certainty:** hypothesis
-- **Scope:** untested on own data; BTC/ETH trending-uptrend regime
-- **Falsifiability:** untested — first implementation in Yuji codebase
-
-**Evidence table:**
+### Evidence — 8 Sources
 
 | Source | Finding |
 |---|---|
-| **FXOpen** | "Hidden divergence is used in trending markets" — directional opposite of regular div |
-| **ACY** | Trend-continuation bias; 4h/daily more reliable than sub-1h for hidden div signals |
-| **Babypips** | Hidden divergence "more reliable in trending markets than regular divergence" — explicit comparative claim |
-| **Alchemy Markets** | Continuation signal — distinct mechanism from reversal (regular div) |
-| **Murphy, TAOFM** | Fibonacci 50% retracement = critical boundary; corrections holding above 50% confirm trend structure intact |
-| **Elder, Trading for a Living** | MACD zero-line = trend direction filter; MACD hist ≥ 0 = bullish momentum dominant |
-| **Wyckoff accumulation principle** | Declining volume on corrective legs = weak sellers = shallow correction likely to resolve as continuation |
-| **Sister prim research (convergent)** | Double-confirmation lifts WR 15–25pp vs single-oscillator; next-candle adds 5–10pp (LuxAlgo, Concord p2c, liquidity-sweep-reversal cycle) |
-| **PMC9920669** | Tested ONLY regular divergence (rated LEAST EFFECTIVE RSI variant on crypto). **Hidden div NOT tested** — absence of negative evidence, not positive evidence. |
+| FXOpen | Hidden div = trending-market tool; directional opposite of regular div |
+| ACY | Trend-continuation bias; 4h/daily more reliable than sub-1h |
+| Babypips | Hidden div "more reliable in trending markets than regular divergence" — explicit comparative |
+| Alchemy Markets | Continuation signal; mechanistically distinct from reversal (regular div) |
+| Murphy, TAOFM | Fib 50% = critical trend-structure boundary; corrections holding above confirm uptrend intact |
+| Elder, Trading for a Living | MACD zero-line = trend direction filter; hist ≥ 0 = bullish momentum dominant |
+| Wyckoff accumulation | Declining volume on correction = weak sellers = shallow, continuation-likely pullback |
+| Sister prim research chain | Double-confirmation +15–25pp WR; next-candle +5–10pp WR (LuxAlgo, Concord p2c — applied by analogy) |
 
-**Key numbers:**
-- No direct crypto-specific WR data for hidden divergence
-- Expected live WR (derived): **58–65%** — above sister prim's 55–62% target by the "more reliable in trends" practitioner adjustment, discounted by absence of own-data anchor
-- Realistic lower bound after OOS degradation: **53–58%** (applying sister prim 25–50% OOS degradation floor)
-- Signal frequency: unknown; estimated < 0.5% of candles (rarer than regular div ~0.8% because uptrend precondition narrows the universe)
+**PMC9920669:** tested ONLY regular divergence (LEAST EFFECTIVE RSI variant on crypto). **Hidden div NOT tested** — no negative evidence, but also no positive anchor.
 
-### Limitations
-1. No peer-reviewed crypto anchor — PMC9920669 did not test hidden divergence; all evidence is practitioner-source
-2. Expected WR is derived by analogy from sister prim research — not directly measured
-3. Fibonacci 50% filter: computed from swing-low to swing-high of prior impulse — swing detection quality carries through
-4. True 5-bar pivot detection still imprecise; argrelextrema with order=5 misses multi-bar tops/bottoms
-5. RSI ≥ 30 lower bound: derived constraint, not empirically validated — edge of boundary is untested
-6. MACD hist ≥ 0 eliminates entries in deep corrections that still resolve as continuation (conservative but untested)
-7. Signal frequency may be too low for statistical validation even after 30-day paper trade window
-8. OOS degradation magnitude: expect 25–50% Sharpe loss (from sister prim walk-forward meta-analysis — applied by analogy)
-9. ADX upper bound 45: parabolic exclusion is a judgment call; threshold untested for hidden div specifically
-10. Mutual exclusivity hard gate: if both signals fire simultaneously it prevents trade — may miss valid entries on boundary regime
+### Key Numbers
 
-### Implementation
-**File:** `user_data/strategies/YujiDivergenceStrategy.py` (extension, NOT a new file)
+| Metric | Value |
+|---|---|
+| Expected live WR | **58–65%** (derived, not measured) |
+| Post-OOS lower bound | **53–58%** (25–50% Sharpe degradation from sister prim meta) |
+| Signal frequency | Estimated < 0.5% of candles |
+| RSI LL floor | ≥ 30 (below = regular-div territory) |
+| Fibonacci pullback ceiling | 50% of prior impulse |
 
-10 implementation gaps:
-1. **Mirror pivot detection**: price HL via `scipy.signal.argrelextrema(close, np.greater, order=5)` on price; RSI LL via `argrelextrema(rsi, np.less, order=5)` — match pivot indices; confirm price makes HL (pivot-2 price > pivot-1 price) AND RSI makes LL (pivot-2 rsi < pivot-1 rsi)
-2. **New IntParameters**: `hidden_divergence_lookback` (default 15, range 8–40) and `rsi_hidden_min_gap` (default 3, range 2–7)
-3. **RSI floor constraint**: `rsi_at_pivot_2 >= 30` — reject if RSI LL < 30 (regular-div territory)
-4. **EMA ribbon quality gate**: `ema_10 > ema_21 > ema_50 > ema_200` count ≥ 3 layers (consistent with ema-pullback-dynamic-support sophisticated)
-5. **Fibonacci pullback depth**: `correction_depth = (prior_impulse_high - pivot_2_low) / (prior_impulse_high - prior_impulse_low)`; reject if `correction_depth > 0.50`
-6. **MACD hist non-negative**: `macd_hist >= 0` at pivot-2 candle
-7. **Volume declining**: `volume_at_pivot_2 < volume_at_pivot_1` (candle-volume at each pivot index)
-8. **Next-candle confirmation**: `hidden_div_signal.shift(1) & (close > close.shift(1))`
-9. **Hard mutual exclusivity**: `& ~buy_rsi_div & ~buy_macd_div & ~buy_double_div` — reject if regular-div detection is active on same pair/candle
-10. **4h primary TF**: run on 4h dataframe; 1h as secondary for entry precision; no sub-1h
+### 10 Implementation Gaps (YujiDivergenceStrategy.py)
+1. Mirror pivot detection: `argrelextrema(close, np.greater, order=5)` for price HL; `argrelextrema(rsi, np.less, order=5)` for RSI LL; match indices
+2. New IntParameters: `hidden_divergence_lookback` (default 15, range 8–40); `rsi_hidden_min_gap` (default 3, range 2–7)
+3. RSI floor: reject if `rsi_at_pivot_2 < 30`
+4. EMA ribbon gate: ≥ 3 of {EMA10>EMA21, EMA21>EMA50, EMA50>EMA200} true
+5. Fibonacci depth: `(prior_impulse_high - pivot_2_low) / (prior_impulse_high - prior_impulse_low) ≤ 0.50`
+6. MACD gate: `macd_hist >= 0` at pivot-2 candle
+7. Volume declining: `volume_at_pivot_2 < volume_at_pivot_1`
+8. Next-candle: `hidden_div_signal.shift(1) & (close > close.shift(1))`
+9. Hard mutual exclusivity: `& ~buy_rsi_div & ~buy_macd_div & ~buy_double_div`
+10. 4h primary TF; 1h secondary; no sub-1h
 
-**Stop placement:** below pivot-2 low (same as sister prim)
-**Target:** prior swing high (rolling 20-bar max)
-**R:R gate:** `(target - close) / (close - stop) >= 1.5` post fee-adjustment
+### Critical Limitation
+No own-data backtest. The RSI ≥ 30 lower bound and Fibonacci 50% ceiling are theoretically motivated but untested as unit filters for hidden divergence specifically. Deployment blocked on: (a) own-data walk-forward across bull→bear phases, (b) head-to-head vs regular-div intermediate on same data window (primary research deliverable — validates or inverts FXOpen/ACY "more reliable in trends" hierarchy for crypto), (c) parameter plateau test on lookback and gap-min.
 
-### Conditions Log Entry
-- **Works when:** EMA ribbon ≥ 3 aligned, ADX 20–45 rising; true 5-bar pivot price HL + RSI LL (≥3pt gap, RSI ≥ 30); pullback ≤ 50% Fib; MACD hist ≥ 0; volume declining; next-candle close > pivot-2 close; 4h primary; BTC/ETH in bull phase; no regular-div signal active same pair
-- **Fails when:** Trend misclassified (ADX < 20 or EMA ribbon degrading); RSI LL < 30 (exhaustion, not continuation); Fib > 50% (structure compromised); MACD hist < 0; volume rising on pullback; sub-1h TF; ranging/sideways regime; hard exclusivity conflict with regular-div
-- **Last validated:** never (intermediate — 10-gap implementation pending; head-to-head backtest vs regular-div required to validate FXOpen/ACY/Babypips "more reliable in trends" claim)
+### Files Updated
+- `knowledge/freqtrade/prims/intermediate/hidden-bullish-rsi-divergence.md` (created, 130 lines)
+- `knowledge/epistemic-index.md` (naive marked SUPERSEDED; intermediate freqtrade table +1 row → 5 intermediate prims)
+- `knowledge/conditions-log.md` (naive marked historical, intermediate entry appended)
+- Commit: `74e70ef`
+
+### Bank State After Cycle 16
+
+| Tier | Freqtrade | Polymarket |
+|---|---|---|
+| Naive active | **0** | 0 |
+| Intermediate | **5** (rsi-oversold, ema-pullback, liq-sweep, regular-div, hidden-div) | 3 |
+| Sophisticated | 3 | 0 |
+
+All freqtrade naive prims are now refined. 5 intermediate, 3 sophisticated.
+
+### Next Cycle Recommendation
+**BACKTEST-ANALYSIS** — shared blocker across all 5 intermediate prims. Primary target: **head-to-head walk-forward of hidden-div vs regular-div intermediate** on same BTC/ETH data window (bull → bear → accumulation). This test has clean falsification design and directly adjudicates:
+- Both survive → divergence mechanism has regime-specific validity on crypto (novel)
+- Hidden survives, regular fails → validates FXOpen/ACY/Babypips hierarchy
+- Both fail → RSI divergence mechanism invalidated for crypto as asset class (mark both as anti-prims)
+- Regular survives, hidden fails → inverts practitioner consensus; requires reinterpretation
+
+Any outcome is load-bearing. Secondary: parameter plateau test on `hidden_divergence_lookback` and `rsi_hidden_min_gap`.
 
 ### Sources
 - [FXOpen — Hidden vs Regular Divergence](https://fxopen.com/blog/en/what-is-the-difference-between-regular-and-hidden-divergence/)
