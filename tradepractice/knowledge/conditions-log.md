@@ -35,6 +35,14 @@
 - **Evidence:** code extraction only — no backtest
 - **Last validated:** never
 
+## liquidity-sweep-reversal (naive)
+- **Works when:** Price near VP level (POC or VAL); clear prior swing low with stop clusters; CVD delta positive and rising; volume > 0.8x 20-SMA; ranging to mildly trending regime
+- **Fails when:** Strong macro downtrend (4h bearish); no CVD confirmation after sweep; low volume sweep (noise); multiple consecutive sweeps at same level (genuine breakdown); no nearby VP level
+- **Best pair(s):** untested — hypothetically better on liquid pairs (BTC/USDT, ETH/USDT) with institutional flow
+- **Best timeframe:** 15m (YujiSmartMoneyStrategy); likely too noisy on 5m
+- **Evidence:** code extraction only — no backtest
+- **Last validated:** never
+
 ---
 
 ## Polymarket Conditions
