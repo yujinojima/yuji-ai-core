@@ -121,7 +121,9 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 | [liquidity-sweep-reversal](freqtrade/prims/intermediate/liquidity-sweep-reversal.md) | Wick >= 0.3% below swing low + close above + CVD divergence + near VP level (POC/VAL) + volume spike + **RANGING-TO-MILD-TREND regime (ADX < 30)**. Exploits trapped breakout shorts at structural levels. | hypothesis | assumed | YujiSmartMoneyStrategy.py (lines 188–197) |
 
 ### Sophisticated
-<!-- Auto-populated by tradepractice analyst -->
+| Name | Rule | Certainty | Reaction Validated | File |
+|------|------|-----------|-------------------|------|
+| [ema-pullback-dynamic-support](freqtrade/prims/sophisticated/ema-pullback-dynamic-support.md) | EMA alignment >= 3 + ADX 25–35 (rising) + **first pullback to 21 EMA only** + 4h bullish + bullish candle + MACD hist rising + RSI 40–65 + volume > 0.8x SMA + fixed stop below swing low → long. **TRENDING only. 8-source evidence base. PF ~2.0, WR ~48%, 25–50% OOS degradation expected. ATR trailing stop DESTROYS edge (PF 0.603).** | evidence | assumed | YujiTrendRiderStrategy.py buy_pullback |
 
 ---
 
@@ -132,9 +134,13 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 |------|------|-----------|-------------------|------|
 | [binary-arb-completeness](polymarket/prims/naive/binary-arb-completeness.md) | YES+NO < $0.995 → buy both sides for risk-free profit if both fill | hypothesis | assumed | src/strategies/arb.py |
 | [spread-capture-market-making](polymarket/prims/naive/spread-capture-market-making.md) | Spread $0.03–$0.15 + liquidity >= $5k → place inside-spread limit orders on both sides to capture spread | guess | assumed | src/strategies/spread.py |
+| [ensemble-forecast-edge](polymarket/prims/naive/ensemble-forecast-edge.md) | GFS ensemble prob - market price >= 8% → buy the mispriced bracket, sized via fractional Kelly | guess | assumed | src/weather/strategy.py |
+| [fractional-kelly-sizing](polymarket/prims/naive/fractional-kelly-sizing.md) | Size = 15% of full Kelly × bankroll, capped at min(5% bankroll, $100). Kelly = (win_prob × odds - lose_prob) / odds | hypothesis | assumed | src/weather/strategy.py |
 
 ### Intermediate
-<!-- Auto-populated by tradepractice analyst -->
+| Name | Rule | Certainty | Reaction Validated | File |
+|------|------|-----------|-------------------|------|
+| [spread-capture-market-making](polymarket/prims/intermediate/spread-capture-market-making.md) | Inside-spread maker quotes + **fee-aware category filter** (geopolitics=0% > sports=3% > politics=4% > weather=5%) + **Avellaneda-Stoikov reservation price in logit space** (r_x = x_mid - q*gamma*sigma_b^2*(T-t)) + **inventory limits** (\|q\| < 5% bankroll/price) + **T-t > 24h** filter + **500ms refresh cycle** + adverse selection guard (cancel on >3% move/min). Industry benchmark: ~0.2% of volume captured as profit; $150-300/day per liquid market at professional scale. | hypothesis | assumed | src/strategies/spread.py |
 
 ### Sophisticated
 <!-- Auto-populated by tradepractice analyst -->

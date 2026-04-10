@@ -35,15 +35,19 @@
 ## ema-pullback-dynamic-support (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
 
-## ema-pullback-dynamic-support (intermediate) — 2026-04-10
-- **Works when:** TRENDING regime only (ADX 25–35, rising); EMA alignment >= 3 (8 > 21 > 50 > 100); 4h EMA50 > EMA200; RSI 40–65; first or second pullback to 21 EMA (<=2 touches in 20 candles); volume > 0.8x SMA(20); bullish candle + MACD hist rising
-- **Fails when:** RANGING regime (ADX < 20, flat EMA ribbon) — **#1 failure mode; crypto spends ~60% of time here**; ADX > 35 (trend exhaustion/reversal risk); 3+ EMA21 tests (level degraded); 4h bearish (EMA50 < EMA200); RSI < 35 or > 70; low volume pullback; parabolic move skipping EMA
-- **Best pair(s):** BTC/USDT, ETH/USDT (institutional trend-following flow)
-- **Best timeframe:** 1h (PF ~2.0, best signal-to-noise) > 30m (PF 2.01) > avoid 5m
-- **Critical finding:** EMA pullback is the TRENDING-ONLY complement to RSI mean reversion (RANGING-ONLY). Raschke Holy Grail confirms first pullback after ADX > 30 is highest-probability setup. IEEE paper shows EMA crypto: PF 3.5, WR 60%.
-- **Evidence:** IEEE paper (2024) + Raschke Holy Grail + community backtests (PakunFX PF 1.965, BTC 30m PF 2.01)
-- **Implementation gaps:** YujiTrendRiderStrategy needs: (1) ADX rising check, (2) ADX < 35 ceiling, (3) volume filter on buy_pullback
-- **Last validated:** never (needs backtest with ADX direction + ceiling filters)
+## ema-pullback-dynamic-support (intermediate → sophisticated)
+- **Status:** SUPERSEDED by sophisticated prim. See sophisticated entry below.
+
+## ema-pullback-dynamic-support (sophisticated) — 2026-04-10
+- **Works when:** TRENDING regime (ADX 25–35, rising); EMA alignment >= 3; 4h EMA50 > EMA200; RSI 40–65; **first pullback to 21 EMA only** (<=1 touch in 20 candles); volume > 0.8x SMA(20); bullish candle + MACD hist rising; BTC/ETH; 1h timeframe
+- **Fails when:** RANGING (ADX < 20) — **#1 failure mode: 57–76% false signal rate without regime gate**; ADX > 35 (exhaustion); ADX declining even if > 25; 3+ EMA21 tests (level exhausted); **ATR trailing stop (PF drops from ~2.0 to 0.603, WR 28%)**; crypto bull market (underperforms B&H: 26% vs 42.5%); low-liquidity alts (PF 1.61 vs 2.68 cross-asset); 5m TF; parabolic moves
+- **Best pair(s):** BTC/USDT, ETH/USDT
+- **Best timeframe:** 1h (PF ~2.0) > 30m (PF 2.01) > daily (PF 1.61–2.68 high variance) > avoid 5m
+- **Key numbers:** PF ~2.0 (BTC 1H), WR ~48%, DD ~6% (BTC 30m). Cross-asset PF variance: 1.61–2.68. Expected OOS degradation: 25–50% (WFE ~72%).
+- **Critical findings:** (1) ADX filter adds only ~1pp success rate (69.9% → 71.0%) — value is in AVOIDING ranging losses, not boosting trending wins. (2) ATR trailing stop destroys the edge entirely. (3) IEEE PF 3.5 was basic EMA cross, NOT pullback — not reproducible for this prim. (4) "60% ranging" claim (PRUVIQ) has no data backing — downgraded from intermediate.
+- **Evidence:** 8 independent sources: IEEE 2024, arxiv 2511.00665, PakunFX, BTC 30m backtest, 8/21 EMA 10yr (AAPL+NVDA), Betashorts failure analysis, Coinmonks 8,765-pattern study, Raschke Holy Grail, MA cross false signal study (1960–2025)
+- **Implementation:** YujiTrendRiderStrategy needs: (1) ADX rising, (2) ADX < 35 ceiling, (3) volume filter, (4) first-pullback-only filter, (5) fixed stop below swing low (NOT ATR trail), (6) target at prior swing high
+- **Last validated:** never (needs own-data backtest with full filter set)
 
 ## liquidity-sweep-reversal (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
@@ -70,19 +74,54 @@
 - **Evidence:** code extraction only — no live trades
 - **Last validated:** never
 
-## spread-capture-market-making (naive) — 2026-04-10
-- **Works when:** Spread $0.03–$0.15; liquidity >= $5k; stable/uncertain market (YES ~$0.30–$0.70); balanced order flow; no imminent resolution; no major news catalyst
-- **Fails when:** Spread < $0.03 (fees consume profit); spread > $0.15 (illiquid/toxic); information event imminent (adverse selection); one-sided flow; market trending toward resolution; competing MM bots with queue priority
-- **Best pair(s):** Active binary markets with moderate uncertainty
-- **Best timeframe:** Continuous limit orders
+## spread-capture-market-making (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## spread-capture-market-making (intermediate) — 2026-04-10
+- **Works when:** Spread > fee-adjusted breakeven (category-dependent); **category filter** (geopolitics 0% > sports 3% > politics/finance 4% > weather/culture/economics 5%; AVOID crypto 7.2% except very wide spreads); price $0.30–$0.70 (uncertainty zone, peak rebate income); liquidity >= $10k; **time-to-resolution > 24h**; inventory |q| < 5% bankroll/price; balanced flow; no scheduled information event in next 2h; spread $0.03–$0.10 optimal
+- **Fails when:** Spread < fee-adjusted breakeven — **#1 failure mode** (current code's MIN_SPREAD=0.03 fails on crypto 7.2% markets); information event imminent (prices gap 40–50pp on news in seconds, erasing months of spread income); price approaching $0/$1 (spread auto-compresses as delta_p = p(1-p)*delta_x); spread > $0.15 (toxic flow); one-sided flow (unbounded inventory build); competing MMs with <10ms latency vs Polymarket 50ms WebSocket (current 30s refresh cycle is 60-300x too slow); T-t < 24h (event risk dominates); inventory breach (binary settlement = total loss on wrong-side); market voided
+- **Best pair(s):** Geopolitics markets (0% taker fee = pure spread capture, no fee drag on counterparties) > sports > politics
+- **Best timeframe:** 100–500ms refresh cycle, continuous cancel-and-replace
+- **Best regime:** Stable/uncertain markets with balanced flow; NOT trending-to-resolution
+- **Key numbers:** Industry benchmark ~0.2% of volume as profit; $150–$300/day per liquid market at professional scale; >$20M total MM profits on Polymarket in 2024; top 1% of traders capture 84% of gains; <30% of all traders profitable; execution edge 2.52c/contract automated vs manual; live 5-min BTC binary MM: 4W/11L -49.5% ROI (efficient pricing defeats spread capture on short-dated markets)
+- **Critical findings:** (1) Maker pays 0% fee; 100% of taker fees redistributed to makers (20-25% rebate by category) — secondary revenue stream beyond spread capture. (2) Avellaneda-Stoikov model must be adapted to **logit space** for prediction markets (arxiv 2510.15205): r_x = x_mid - q*gamma*sigma_b^2*(T-t); delta_x = gamma*sigma_b^2*(T-t)/2 + (1/k)*log(1+gamma/k); inventory cap |q| < 1/max(p*(1-p), eps). (3) Single adverse selection event can erase weeks/months of spread income — binary settlement amplifies one-sided inventory risk.
+- **Evidence:** 5 independent sources — Polymarket fees docs, arxiv 2510.15205 (Oct 2025, Black-Scholes for Prediction Markets), newyorkcityservers.com 2026 guide, fglancszpigel live trading analysis (gwrx2005), Polymarket/poly-market-maker official keeper
+- **Implementation gaps:** Current `src/strategies/spread.py` needs: (1) fee-aware category filter, (2) inventory tracking + Avellaneda-Stoikov skew in logit space, (3) adverse selection guard (cancel-on-move), (4) time-to-resolution filter (no quotes <24h to settlement), (5) refresh cycle 30s → 500ms, (6) dynamic order sizing scaling with spread/depth, (7) maker rebate accounting
+- **Last validated:** never (needs paper-trading backtest with full filter set)
+
+## ensemble-forecast-edge (naive) — 2026-04-10
+- **Works when:** GFS ensemble well-calibrated for city/season; market illiquid (casual bettors); 1-3 day horizon (peak ensemble skill); bracket boundaries within ensemble spread; liquidity >= $500; uncertain market (YES $0.20-$0.80)
+- **Fails when:** Market already efficient (sophisticated bettors/bots); forecast horizon > 5 days; extreme weather (model underdispersion); tail brackets (30-member sample too small); station-vs-gridpoint bias; GFS systematic bias for geography
+- **Best pair(s):** Weather temperature bracket markets on Polymarket
+- **Best timeframe:** 1-3 days before resolution
 - **Evidence:** Code extraction only — no live trades or backtests
-- **Critical unknowns:** No inventory management (unbounded directional exposure from partial fills); no adverse selection defence; no order cancellation/refresh; fee impact unquantified; ORDER_SIZE=10 is fixed regardless of conditions
+- **Critical unknowns:** Single model (no ECMWF/NAM blend); no calibration layer; 30 members gives coarse probability resolution (3.3% per member); no ensemble spread confidence check; station-model mismatch unquantified; execution costs vs edge unquantified
 - **Last validated:** never
 
-## spread-capture-market-making (naive) — 2026-04-10
-- Works when: Spread $0.03–$0.15, liquidity >= $5k, balanced flow, stable market
-- Fails when: Narrow spread (<fees), toxic flow, one-sided volume, imminent resolution
-- Last validated: never
+## fractional-kelly-sizing (naive) — 2026-04-10
+- **Works when:** Edge estimate is accurate; many independent bets; bankroll large enough for Kelly to produce meaningful sizes; binary resolution
+- **Fails when:** Edge miscalibrated (Kelly amplifies estimation error); correlated bets (same city/date); small sample; bankroll < $2k (sizes round to dust); MAX_BET=$100 cap binds on strong edges
+- **Best pair(s):** All binary Polymarket markets with quantifiable edge
+- **Best timeframe:** Per-trade sizing decision (not time-dependent)
+- **Evidence:** Kelly criterion theory is well-established; this specific implementation (KELLY_FRACTION=0.15, triple cap) is untested
+- **Critical unknowns:** Optimal fraction for this edge distribution (0.15 is arbitrary); no correlation adjustment for concurrent bets; no drawdown-based bankroll update; bankroll proxy (max_position*10) vs actual capital
+- **Last validated:** never
 
 ---
 
+
+## ema-pullback-dynamic-support (sophisticated) — 2026-04-10
+- **Works when:** TRENDING regime (ADX 25–35, rising); first pullback to 21 EMA; 1h TF; BTC/ETH
+- **Fails when:** RANGING (57–76% false signals); ATR trailing stop (PF 0.603); bull market B&H comparison; low-liquidity alts
+- **Key numbers:** PF ~2.0, WR ~48%, 25–50% OOS degradation expected
+- **Last validated:** never
+
+Sources:
+- [IEEE — Algorithmic Crypto Trading using EMA (2024)](https://ieeexplore.ieee.org/iel8/11034707/11034773/11035368.pdf)
+- [arxiv — Technical Analysis Meets Machine Learning: Bitcoin Evidence](https://arxiv.org/html/2511.00665v1)
+- [PakunFX — EMA Pullback Speed Strategy (TradingView)](https://www.tradingview.com/script/cxhQ5d5x-EMA-Pullback-Speed-Strategy/)
+- [Coinmonks — Crypto Backtest: 15+ Trading Strategies](https://medium.com/coinmonks/crypto-backtest-the-most-extensive-analysis-15-trading-strategies-58f06deca2bd)
+- [Betashorts — EMA Pullback Backtest Failure Analysis (2026)](https://medium.com/@betashorts1998/i-fixed-the-biggest-flaw-in-my-last-backtest-the-strategy-still-lost-money-64022a65e370)
+- [QuantifiedStrategies — 8/21 EMA 10yr Backtest](https://www.quantifiedstrategies.com/exponential-moving-average-trading-strategy/)
+- [Thrive.fi — Crypto Market Regime Detection](https://thrive.fi/blog/trading/crypto-market-regime-detection)
+- [Raschke Holy Grail — TradingSetupsReview](https://www.tradingsetupsreview.com/the-holy-grail-trading-setup/)
