@@ -57,14 +57,14 @@ Complete the task. Be thorough but terse. No filler."
     # Extract the text result
     result="$(echo "$json_output" | jq -r '.result // "ERROR: no result"' 2>/dev/null || echo "ERROR: parse failed")"
 
-    # Extract and record token usage
-    tokens="$(extract_tokens "$json_output")"
-    cost_usd="$(echo "$json_output" | jq -r '.total_cost_usd // 0' 2>/dev/null || echo 0)"
+    # Extract and record actual USD cost
+    cost_usd="$(extract_cost "$json_output")"
+    tokens="$(echo "$json_output" | jq -r '.usage.input_tokens + .usage.output_tokens' 2>/dev/null || echo 0)"
 
-    record_usage "$ROLE" "$task_model" "$tokens"
+    record_usage "$ROLE" "$task_model" "$cost_usd"
 
-    echo "[$ROLE] Done. ${#result} chars, $tokens tokens, \$$cost_usd"
-    log_event "$ROLE" "task_completed" "tokens=$tokens cost=\$$cost_usd chars=${#result}"
+    printf "[%s] Done. %d chars, \$%s cost\n" "$ROLE" "${#result}" "$cost_usd"
+    log_event "$ROLE" "task_completed" "cost=\$$cost_usd tokens=$tokens chars=${#result}"
 
     enqueue "conductor" "$ROLE" "${ROLE}-result" "$result"
   else

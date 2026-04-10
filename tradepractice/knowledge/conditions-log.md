@@ -22,7 +22,10 @@
 ## rsi-oversold-mean-reversion (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
 
-## rsi-oversold-mean-reversion (intermediate) — 2026-04-10
+## rsi-oversold-mean-reversion (intermediate → sophisticated)
+- **Status:** SUPERSEDED by sophisticated prim. See sophisticated entry below.
+
+## rsi-oversold-mean-reversion (intermediate) — 2026-04-10 [historical]
 - **Works when:** RANGING regime only (ADX < 20, BB width < 40th pctl); price > 1h EMA200; 4h RSI > 25; confirming oscillator (MFI < 30 / Stoch < 25 / close < BB lower); volume > 0.8x SMA(20); high-liquidity pairs (BTC, ETH)
 - **Fails when:** TRENDING regime (ADX > 25, EMA alignment >= 3) — **#1 failure mode, confirmed by academic study**; 1h+4h RSI both < 30 (structural breakdown); news capitulation; low-liquidity altcoins; 5m timeframe (34.7% WR); price < 1h EMA200
 - **Best pair(s):** BTC/USDT, ETH/USDT (institutional mean-reversion algos active)
@@ -31,6 +34,17 @@
 - **Evidence:** academic paper (PMC9920669, 10 cryptos, 1,462 days) + community backtests (AtomicScript, Briplotnik)
 - **Implementation note:** YujiRegimeStrategy already regime-gates correctly. YujiMultiSignalStrategy buy_1 LACKS regime gate — primary fix needed.
 - **Last validated:** never (regime-gated version needs backtest)
+
+## rsi-oversold-mean-reversion (sophisticated) — 2026-04-10
+- **Works when:** RANGING regime (ADX < 20 AND BBW percentile < 40, stable — two-source regime confirmation); price > 1h EMA200; RSI(14) in plateau zone 25–35 (NOT a single magic threshold); confirming oscillator (MFI < 30 / Stoch < 25 / close < BB lower); volume > 0.8x SMA(20); BTC/USDT or ETH/USDT only; 4h primary timeframe (1h secondary); fee+slippage-adjusted edge > 2x friction; parameter plateau verified (PF stable across RSI 25–35 with < 20% variance); OOS >= 70% of IS
+- **Fails when:** TRENDING (ADX > 20 or EMA alignment ≥ 3) — **#1 failure mode: −97.5pp vs B&H on 10 cryptos over 4 years** (PMC9920669); BB squeeze → expansion (trend-birth not reversion); parameter curve-fit / "magic numbers" like RSI < 23.7 (overfit signal); sub-1h timeframe (Sharpe destroyed by friction, 5m BTC WR 34.7%); altcoins (no institutional mean-reversion flow); friction > 50% of raw edge (Sharpe erosion ~47% on typical crypto fees); HFT variant (+84k gross → −99k net); OOS < 70% of IS; news capitulation; 1h+4h RSI both < 30 (structural breakdown); IS/OOS regime flip (2020 → 2021 collapse pattern); multiple-testing inflation (> 20 parameter variants tested without Deflated Sharpe correction)
+- **Best pair(s):** BTC/USDT, ETH/USDT (institutional mean-reversion algos active; altcoins excluded)
+- **Best timeframe:** 4h (Sharpe 5.13, WR 60%, PF 2.09 — AtomicScript) > 1h (Sharpe 0.95) > **avoid < 1h entirely** (5m BTC WR 34.7%; friction dominates)
+- **Key numbers:** Regime-gated 4h BTC: Sharpe 5.13, WR 60%, PF 2.09; ungated crypto mean reversion: −97.5pp vs B&H (177.7% vs 275.2% on PMC9920669 n=10, 1,462 days); inverse momentum same data: +498pp (773.6% vs 275.2%); Briplotnik BTC-neutral post-2021: Sharpe 2.3; transaction cost Sharpe erosion: ~47% (1.5 → 0.8); realistic slippage: 0.02–0.05%/trade; Connors RSI2 equity benchmark: PF 2.08 (n=288); OOS degradation ceiling: > 30% Sharpe loss = reject; parameter plateau criterion: PF variance < 20% across RSI 25–35
+- **Critical findings:** (1) **Second academic anchor** (SSRN 5775962, Efe Arda 2026 BTC/USDT) confirms mean reversion failed in bear phase, only "limited profitability" in accumulation — bolsters PMC9920669. (2) **Parameter plateau is a sophistication criterion**, not a parameter choice: if rule only profits at RSI = 23.7, it is overfit. Must test [25, 27, 30, 32, 35] and verify plateau. (3) **Friction is a deployment killer** — BSIC/PANews/FMZQuant converge: frequent mean-reversion strategies lose ~47% of Sharpe to costs; HFT variants flip sign entirely. (4) **Real QQQ example**: RSI mean reversion +28.4% IS → −79.3% live without OOS validation — quantifies tail risk. (5) **Bitcoin verdict**: 3 independent sources (PMC9920669, Bens Crypto Talk, QuantifiedStrategies) all conclude RSI-as-mean-reversion DOES NOT WORK on Bitcoin without regime gate; RSI-as-momentum works. (6) **Multiple-testing inflation** (PBO/DSR, Bailey-Borwein-Lopez de Prado): probability of overfitting rises with every tested variant; need CPCV + Deflated Sharpe Ratio when > 20 parameter combinations tested. (7) **BB squeeze expansion** is a distinct regime — BBW < 20th pctl followed by widening is trend birth, not reversion; must filter out post-squeeze candles.
+- **Evidence:** 8 independent sources including 2 academic (PMC9920669, SSRN 5775962 Efe Arda), 3 community backtests (AtomicScript, Briplotnik, QuantifiedStrategies RSI2/Bitcoin RSI), 3 methodology (PBO/DSR Bailey-Borwein, BSIC transaction cost modelling, ScienceDirect CPCV comparison)
+- **Implementation gaps:** YujiRegimeStrategy range_entry needs: (1) BBW percentile < 40 filter alongside ADX < 20, (2) RSI threshold as IntParameter 25–35 with plateau verification, (3) 4h primary / 1h secondary / drop 15m+5m, (4) fee+slippage gate (refuse if edge < 2x friction), (5) exit at BB middle not RSI > 50, (6) max 2 entries per 20 candles per pair. YujiMultiSignalStrategy.buy_1 (lines 191–196) **CRITICAL FIX**: (7) add regime gate — currently fires in any regime, exact failure mode quantified by PMC9920669, (8) BTC/ETH pair whitelist, (9) remove 15m timeframe. Deployment blocked pending: plateau test on RSI 25–35, walk-forward across bull→bear→accumulation, friction-adjusted OOS Sharpe within 30% of IS.
+- **Last validated:** never (needs own-data walk-forward with plateau verification — #1 blocker shared with sister sophisticated prims)
 
 ## ema-pullback-dynamic-support (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.

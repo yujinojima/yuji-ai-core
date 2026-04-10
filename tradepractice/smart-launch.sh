@@ -73,9 +73,9 @@ fi
 # Init state (preserve budget file)
 mkdir -p "$INBOX_DIR/conductor" "$INBOX_DIR/analyst" "$INBOX_DIR/implementer"
 echo "running" > "$STATUS_FILE"
-log_event "system" "launch-smart" "budget=$(get_budget_used)/${SESSION_BUDGET}"
+log_event "system" "launch-smart" "budget=$(get_budget_used_cents)c/${SESSION_BUDGET_USD}"
 
-export CLAUDE_BIN SESSION_BUDGET STOP_THRESHOLD
+export CLAUDE_BIN SESSION_BUDGET_USD STOP_THRESHOLD
 
 # Quote paths for spaces
 CONDUCTOR_CMD="bash \"$SCRIPT_DIR/agents/smart-conductor.sh\"; echo '--- CONDUCTOR EXITED ---'; read"

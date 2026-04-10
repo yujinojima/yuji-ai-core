@@ -101,7 +101,7 @@ while is_running; do
   echo "═══════════════════════════════════════"
   echo "  CYCLE $cycle — $project — $(date +%H:%M:%S)"
   echo "  Analyst model: $next_model (budget-selected)"
-  echo "  Budget used: $(get_budget_used) tokens ($(get_budget_percent)%)"
+  echo "  Budget used: $(get_budget_percent)% (of \$${SESSION_BUDGET_USD})"
   echo "═══════════════════════════════════════"
 
   knowledge="$(load_knowledge "$project")"
