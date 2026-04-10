@@ -1,0 +1,60 @@
+{
+  "projects": {
+    "allok8r": {
+      "path": "/home/yuji/Desktop/Yuji Project/ALLOK8R",
+      "type": "web-app",
+      "stack": "Next.js 15 + TypeScript + Tailwind + Supabase + Drizzle ORM",
+      "ralph_enabled": true,
+      "notes": "Team/event management SaaS. Source of truth is ALLOK8R.html. Uses Ralph agent loop."
+    },
+    "the_life_experiment": {
+      "path": "/home/yuji/Desktop/Yuji Project/The-Life-Experiment",
+      "type": "web-app",
+      "stack": "Nuxt 4 + Vue 3 + TypeScript + Tailwind + Drizzle ORM + PWA",
+      "ralph_enabled": true,
+      "notes": "AI-powered fitness/training coach platform. Uses Ralph agent loop."
+    },
+    "yujielectron": {
+      "path": "/home/yuji/Desktop/Yuji Project/YujiElectron",
+      "type": "desktop-app",
+      "stack": "Electron 29 + Electron Forge",
+      "ralph_enabled": false,
+      "notes": "Minimal desktop app wrapper. No Claude/agent setup. Possibly dormant."
+    },
+    "ralph": {
+      "path": "/home/yuji/Desktop/Yuji Project/ralph",
+      "type": "automation-framework",
+      "stack": "Bash + Claude Code/Amp",
+      "ralph_enabled": false,
+      "notes": "The Ralph meta-framework itself. Defines the autonomous agent loop pattern used by other projects."
+    },
+    "everything_claude_code": {
+      "path": "/home/yuji/Desktop/Yuji Project/everything-claude-code",
+      "type": "agent-framework-resource",
+      "stack": "Node.js 18+ (CommonJS) + Markdown",
+      "ralph_enabled": false,
+      "notes": "Production library: 36 agents, 150 skills, 68 commands, hooks, scripts. Primary source of reusable Claude resources."
+    },
+    "polymarket_bot": {
+      "path": "/home/yuji/Desktop/Yuji Project/polymarket-bot",
+      "type": "trading-bot",
+      "stack": "Python 3.10 + py-clob-client + httpx + websockets",
+      "ralph_enabled": false,
+      "notes": "Polymarket prediction market trading bot. Arb + spread strategies. Dry-run by default."
+    },
+    "freqtrade": {
+      "path": "/home/yuji/Desktop/Yuji Project/freqtrade",
+      "type": "trading-bot",
+      "stack": "Python + Freqtrade + Docker",
+      "ralph_enabled": false,
+      "notes": "Freqtrade crypto trading bot. Docker-based. Strategies in user_data/strategies/. Config in user_data/config.json."
+    },
+    "lldashboard": {
+      "path": "/home/yuji/Desktop/Yuji Project/yujidashboard",
+      "type": "web-app",
+      "stack": "Node.js + Vanilla HTML/CSS/JS",
+      "ralph_enabled": false,
+      "notes": "Personal ops dashboard. Habits, state tracking, project overview, team management, todo list."
+    }
+  }
+}

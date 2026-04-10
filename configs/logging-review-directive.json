@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "description": "Agent logging and review enforcement directive. All agents must log significant actions and submit work for review before completion.",
+
+  "log_target": "ai-core/logs/agent-events.jsonl",
+  "log_format": "jsonl",
+
+  "completion_rule": "No significant work is considered complete unless it has been (1) logged, (2) reviewed, and (3) if code-related, passed both Application Review and Director Review.",
+
+  "review_chain": {
+    "non_code": ["agent_self_log", "behaviour_manager_review"],
+    "code": ["agent_self_log", "application_review", "director_review", "behaviour_manager_review"]
+  },
+
+  "review_roles": {
+    "application_review": {
+      "description": "Secondary review of implementation work. Checks UX flow, logic alignment, integration, and whether the change matches intended product behaviour.",
+      "performed_by": "code-reviewer or tdd-guide (context-dependent)"
+    },
+    "director_review": {
+      "description": "Required for code changes after Application Review. Reviews architectural fit, strategic alignment, code quality, maintainability. Accept, revise, or rollback.",
+      "performed_by": "director"
+    },
+    "behaviour_manager_review": {
+      "description": "Monitors compliance, scores performance, links changes to prior implementations, detects regression patterns.",
+      "performed_by": "behaviour-manager"
+    }
+  },
+
+  "event_types": {
+    "task": ["task_assigned", "task_started", "task_paused", "task_completed", "task_blocked", "task_abandoned"],
+    "decision": ["implementation_decision", "architecture_decision", "design_tradeoff", "dependency_choice", "scope_adjustment"],
+    "change": ["feature_created", "feature_updated", "bug_fix_applied", "refactor_completed", "rollback_executed", "config_change"],
+    "error": ["bug_discovered", "test_failure", "integration_issue", "regression_introduced", "missing_dependency", "unclear_requirement", "environment_failure"],
+    "review": ["submitted_for_application_review", "application_review_passed", "application_review_failed", "submitted_for_director_review", "director_review_passed", "director_review_failed", "sent_back_for_revision"],
+    "improvement": ["linked_to_previous_implementation", "score_adjusted", "regression_linked", "improvement_linked"]
+  },
+
+  "log_schema": {
+    "required": ["timestamp", "agent", "role", "project", "action_type", "summary", "status"],
+    "optional": ["task_id", "feature_id", "related_feature_id", "details", "code_related", "review_status", "application_review_required", "director_review_required", "previous_version", "current_version", "score_delta"]
+  },
+
+  "enforcement": {
+    "tron": "Orchestration and enforcement. Ensures no agent bypasses logging or review. Reports non-compliance to Behaviour Manager.",
+    "behaviour_manager": "Owns workflow optimisation. Monitors logs, scores performance, links changes to prior work, detects repeat failures, recommends refinements.",
+    "all_agents": "Must log significant actions and submit work for review before marking complete. Must include traceability to previous versions where applicable."
+  }
+}
