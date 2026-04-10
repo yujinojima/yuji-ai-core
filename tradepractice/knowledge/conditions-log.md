@@ -116,7 +116,10 @@
 - **Critical unknowns:** Single model (no ECMWF/NAM blend); no calibration layer; 30 members gives coarse probability resolution (3.3% per member); no ensemble spread confidence check; station-model mismatch unquantified; execution costs vs edge unquantified
 - **Last validated:** never
 
-## fractional-kelly-sizing (naive) — 2026-04-10
+## fractional-kelly-sizing (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## fractional-kelly-sizing (naive) — 2026-04-10 [historical]
 - **Works when:** Edge estimate is accurate; many independent bets; bankroll large enough for Kelly to produce meaningful sizes; binary resolution
 - **Fails when:** Edge miscalibrated (Kelly amplifies estimation error); correlated bets (same city/date); small sample; bankroll < $2k (sizes round to dust); MAX_BET=$100 cap binds on strong edges
 - **Best pair(s):** All binary Polymarket markets with quantifiable edge
@@ -124,6 +127,17 @@
 - **Evidence:** Kelly criterion theory is well-established; this specific implementation (KELLY_FRACTION=0.15, triple cap) is untested
 - **Critical unknowns:** Optimal fraction for this edge distribution (0.15 is arbitrary); no correlation adjustment for concurrent bets; no drawdown-based bankroll update; bankroll proxy (max_position*10) vs actual capital
 - **Last validated:** never
+
+## fractional-kelly-sizing (intermediate) — 2026-04-10
+- **Works when:** Edge source has measurable calibration quality (Brier score or IS/OOS accuracy); dynamic bankroll tracked after each resolution; N concurrent bets ≤ 5; binary markets with defined resolution horizon; edge > 3x execution friction
+- **Fails when:** Uncalibrated edge used with 0.50 tier (ruin risk from amplified estimation error — 10% edge overestimate → ~2x bet size); N > 5 correlated bets without portfolio-level Kelly; bankroll proxy instead of actual capital; $100 hard MAX_BET cap overrides Kelly at bankroll > $13k; single catastrophic resolution on wrong-side inventory; long-horizon lockup (>7d) without discount factor applied to fraction
+- **Best pair(s):** All binary Polymarket markets where edge source has calibration evidence
+- **Best timeframe:** Per-trade sizing; bankroll updated after each settlement
+- **Key numbers:** Full Kelly → 33% probability of halving before doubling (MacLean-Hakansson); 0.25 Kelly = industry standard for uncalibrated edges (PolySwarm 50-agent system); 0.50 Kelly = appropriate for validated models with Brier ≤ 0.30; 10% edge overestimate → ~2x recommended bet size; tiered EV: small edge (2-5%) → 1-2% bankroll, medium (5-15%) → 2-4%, large (>15%) → 4-6%; 20% drawdown stop = industry standard circuit-breaker; current KELLY_FRACTION=0.15 is 40% below conservative academic floor
+- **Critical findings:** (1) arxiv 2412.14144 (Meister 2024): prediction market prices bounded [0,1] — KL-divergence between model and market beliefs drives growth; miscalibration near p=0/1 disproportionately destroys portfolio growth. (2) PolySwarm (arxiv 2604.03888) uses quarter-Kelly for 50-agent ensemble uncertainty — validates 0.25 as appropriate for uncalibrated multi-model edges. (3) KELLY_FRACTION=0.15 in current code is sub-floor — 40% below even the conservative 0.25 academic recommendation; correct upward. (4) Concurrent-bet scalar 1/sqrt(N) is a practical heuristic; full solution requires covariance-adjusted portfolio Kelly.
+- **Evidence:** 4 sources — arxiv 2412.14144 (Meister Dec 2024), arxiv 2604.03888 (PolySwarm), MacLean et al. (Good and Bad Properties of Kelly), mbotopoly.com prediction market risk guide
+- **Implementation gaps:** (1) Calibration score logging system needed (predictions vs outcomes → Brier score), (2) true bankroll from balance API, (3) portfolio-level covariance Kelly for correlated weather bets, (4) resolution-horizon discount factor
+- **Last validated:** never (needs live trade history with outcome tracking)
 
 ---
 

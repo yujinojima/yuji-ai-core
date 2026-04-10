@@ -137,12 +137,13 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 | [binary-arb-completeness](polymarket/prims/naive/binary-arb-completeness.md) | YES+NO < $0.995 → buy both sides for risk-free profit if both fill | hypothesis | assumed | src/strategies/arb.py |
 | [spread-capture-market-making](polymarket/prims/naive/spread-capture-market-making.md) | Spread $0.03–$0.15 + liquidity >= $5k → place inside-spread limit orders on both sides to capture spread | guess | assumed | src/strategies/spread.py |
 | [ensemble-forecast-edge](polymarket/prims/naive/ensemble-forecast-edge.md) | GFS ensemble prob - market price >= 8% → buy the mispriced bracket, sized via fractional Kelly | guess | assumed | src/weather/strategy.py |
-| [fractional-kelly-sizing](polymarket/prims/naive/fractional-kelly-sizing.md) | Size = 15% of full Kelly × bankroll, capped at min(5% bankroll, $100). Kelly = (win_prob × odds - lose_prob) / odds | hypothesis | assumed | src/weather/strategy.py |
+| [fractional-kelly-sizing](polymarket/prims/naive/fractional-kelly-sizing.md) | ~~Size = 15% of full Kelly × bankroll, capped at min(5% bankroll, $100)~~ — **SUPERSEDED** by intermediate | hypothesis | assumed | src/weather/strategy.py |
 
 ### Intermediate
 | Name | Rule | Certainty | Reaction Validated | File |
 |------|------|-----------|-------------------|------|
 | [spread-capture-market-making](polymarket/prims/intermediate/spread-capture-market-making.md) | Inside-spread maker quotes + **fee-aware category filter** (geopolitics=0% > sports=3% > politics=4% > weather=5%) + **Avellaneda-Stoikov reservation price in logit space** (r_x = x_mid - q*gamma*sigma_b^2*(T-t)) + **inventory limits** (\|q\| < 5% bankroll/price) + **T-t > 24h** filter + **500ms refresh cycle** + adverse selection guard (cancel on >3% move/min). Industry benchmark: ~0.2% of volume captured as profit; $150-300/day per liquid market at professional scale. | hypothesis | assumed | src/strategies/spread.py |
+| [fractional-kelly-sizing](polymarket/prims/intermediate/fractional-kelly-sizing.md) | Fraction tier: 0.50 Kelly (calibrated edge, Brier ≤ 0.30) or 0.25 Kelly (uncalibrated). Concurrent-bet scalar: 1/sqrt(N). 20% drawdown circuit-breaker halves sizes. Fee-adjusted odds formula. 5% bankroll cap (replaces $100 hard cap). | evidence | assumed | src/weather/strategy.py → src/risk/kelly.py |
 
 ### Sophisticated
 <!-- Auto-populated by tradepractice analyst -->
