@@ -19,13 +19,18 @@
 
 ## Freqtrade Conditions
 
-## rsi-oversold-mean-reversion (naive)
-- **Works when:** Ranging market (ADX < 20, BB width compressed); price above 1h EMA200; 1h RSI < 65; 4h RSI < 70; sell-off is corrective not structural
-- **Fails when:** Downtrend (EMA alignment bearish, ADX > 25); 1h or 4h RSI also < 30; news-driven capitulation; price breaking major multi-day support
-- **Best pair(s):** untested
-- **Best timeframe:** untested — implemented on 15m (YujiMultiSignalStrategy) and 1h (YujiRegimeStrategy)
-- **Evidence:** code extraction only — no backtest
-- **Last validated:** never
+## rsi-oversold-mean-reversion (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## rsi-oversold-mean-reversion (intermediate) — 2026-04-10
+- **Works when:** RANGING regime only (ADX < 20, BB width < 40th pctl); price > 1h EMA200; 4h RSI > 25; confirming oscillator (MFI < 30 / Stoch < 25 / close < BB lower); volume > 0.8x SMA(20); high-liquidity pairs (BTC, ETH)
+- **Fails when:** TRENDING regime (ADX > 25, EMA alignment >= 3) — **#1 failure mode, confirmed by academic study**; 1h+4h RSI both < 30 (structural breakdown); news capitulation; low-liquidity altcoins; 5m timeframe (34.7% WR); price < 1h EMA200
+- **Best pair(s):** BTC/USDT, ETH/USDT (institutional mean-reversion algos active)
+- **Best timeframe:** 4h (Sharpe 5.13, 60% WR, PF 2.09) > 1h (Sharpe 0.95) > 15m (Sharpe 2.61 but few trades)
+- **Critical finding:** RSI mean reversion underperforms buy-and-hold on crypto by 97.5pp without regime filter (PMC9920669: 177.7% vs 275.2%). RSI as momentum indicator returns 773.6% on same data.
+- **Evidence:** academic paper (PMC9920669, 10 cryptos, 1,462 days) + community backtests (AtomicScript, Briplotnik)
+- **Implementation note:** YujiRegimeStrategy already regime-gates correctly. YujiMultiSignalStrategy buy_1 LACKS regime gate — primary fix needed.
+- **Last validated:** never (regime-gated version needs backtest)
 
 ## ema-pullback-dynamic-support (naive)
 - **Works when:** EMA alignment >= 3 (EMA8 > EMA21 > EMA50 > EMA100); ADX > 20; 4h EMA50 > EMA200 (higher-timeframe bullish); RSI 40–65 (mid-range, not overbought or broken); price has not tested 21 EMA more than 2x in last 20 candles
@@ -47,9 +52,10 @@
 
 ## Polymarket Conditions
 
-<!-- Auto-populated by tradepractice analyst -->
-
-## ema-pullback-dynamic-support (naive) — 2026-04-10
-- **Works when:** trending market, EMA ribbon fully aligned, ADX > 20, 4h bullish, RSI 40–65
-- **Fails when:** EMA alignment degrading, choppy (ADX < 18), breakdown (RSI < 35), level over-tested
+## binary-arb-completeness (naive) — 2026-04-10
+- **Works when:** YES+NO price sum < $0.995; both sides have depth; market liquidity > $10k; low arb bot competition
+- **Fails when:** Gap < execution fees; only one leg fills (partial execution); market voided; gap closes before second leg
+- **Best pair(s):** all binary Polymarket markets
+- **Best timeframe:** real-time orderbook (opportunities are fleeting)
+- **Evidence:** code extraction only — no live trades
 - **Last validated:** never

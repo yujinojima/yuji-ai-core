@@ -114,7 +114,9 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 | [liquidity-sweep-reversal](freqtrade/prims/naive/liquidity-sweep-reversal.md) | Wick below swing low + close back above + bullish candle + CVD positive → long if accepted | guess | assumed | YujiSmartMoneyStrategy.py (lines 179–187) |
 
 ### Intermediate
-<!-- Auto-populated by tradepractice analyst -->
+| Name | Rule | Certainty | Reaction Validated | File |
+|------|------|-----------|-------------------|------|
+| [rsi-oversold-mean-reversion](freqtrade/prims/intermediate/rsi-oversold-mean-reversion.md) | RSI(14) < 30 + RANGING regime (ADX < 20) + price > 1h EMA200 + confirming oscillator + volume → long to BB middle. **Does NOT work in trending crypto markets.** | hypothesis | assumed | YujiRegimeStrategy.py range_entry (lines 185–194) |
 
 ### Sophisticated
 <!-- Auto-populated by tradepractice analyst -->
@@ -124,7 +126,9 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 ## Polymarket Prims
 
 ### Naive
-<!-- Auto-populated by tradepractice analyst -->
+| Name | Rule | Certainty | Reaction Validated | File |
+|------|------|-----------|-------------------|------|
+| [binary-arb-completeness](polymarket/prims/naive/binary-arb-completeness.md) | YES+NO < $0.995 → buy both sides for risk-free profit if both fill | hypothesis | assumed | src/strategies/arb.py |
 
 ### Intermediate
 <!-- Auto-populated by tradepractice analyst -->
