@@ -77,10 +77,10 @@ log_event "system" "launch-smart" "budget=$(get_budget_used_cents)c/${SESSION_BU
 
 export CLAUDE_BIN SESSION_BUDGET_USD STOP_THRESHOLD
 
-# Quote paths for spaces
-CONDUCTOR_CMD="bash \"$SCRIPT_DIR/agents/smart-conductor.sh\"; echo '--- CONDUCTOR EXITED ---'; read"
-ANALYST_CMD="bash \"$SCRIPT_DIR/agents/worker.sh\" analyst sonnet; echo '--- ANALYST EXITED ---'; read"
-IMPLEMENTER_CMD="bash \"$SCRIPT_DIR/agents/worker.sh\" implementer sonnet; echo '--- IMPLEMENTER EXITED ---'; read"
+# Auto-cleanup: when conductor exits, kill the whole tmux session (no more zombies)
+CONDUCTOR_CMD="bash \"$SCRIPT_DIR/agents/smart-conductor.sh\"; echo '--- CONDUCTOR EXITED ---'; sleep 5; tmux kill-session -t $SESSION_NAME"
+ANALYST_CMD="bash \"$SCRIPT_DIR/agents/worker.sh\" analyst sonnet; echo '--- ANALYST EXITED ---'; sleep 2"
+IMPLEMENTER_CMD="bash \"$SCRIPT_DIR/agents/worker.sh\" implementer sonnet; echo '--- IMPLEMENTER EXITED ---'; sleep 2"
 
 tmux new-session -d -s "$SESSION_NAME" -n "trade" "$CONDUCTOR_CMD"
 tmux split-window -t "$SESSION_NAME" -h "$ANALYST_CMD"
