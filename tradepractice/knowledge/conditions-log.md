@@ -124,6 +124,7 @@
 - **Last validated:** never (NEW naive prim; hidden-divergence variant never implemented or tested in Yuji codebase; designed to close the regime coverage gap left by bullish-rsi-divergence intermediate which excludes persistent uptrend)
 
 ## vwap-deviation-mean-reversion (naive) — 2026-04-11
+**[historical — SUPERSEDED by intermediate, cycle 53]**
 - **Works when:** RANGING regime (ADX < 25); close ≤ VWAP − 1.0×σ_D (daily UTC-anchored VWAP, σ_D = 20-bar rolling close std); next-candle recovery confirmed (close > VWAP − 0.5×σ_D); price structurally bullish (close > 1h EMA200); BTC/USDT or ETH/USDT only (institutional flow assumption); 4h primary timeframe; fee-adjusted R:R ≥ 1:1.5 to VWAP target
 - **Fails when:** TRENDING regime (ADX > 25) — **#1 failure mode: VWAP deviation is directional, not noise; institutional bids absent or overwhelmed**; news-driven capitulation (macro event pulls all institutional passive bids); price below 1h EMA200 (structural bear — buy programs suppressed); no next-candle recovery (continuation breakdown below 1.0σ); altcoins or low-liquidity pairs (no institutional VWAP tracking); weekend/low-volume UTC periods (VWAP has known distortions); sub-1h timeframe (noise + friction); VWAP reset at daily open (stale band on new session start)
 - **Best pair(s):** BTC/USDT, ETH/USDT (institutional execution algo activity; altcoins excluded — insufficient institutional benchmark tracking)
@@ -131,7 +132,19 @@
 - **Key numbers:** QuantifiedStrategies equity VWAP bounce ~55–60% WR (unverified for crypto); expected own-data live WR target **53–58%** after 25–50% OOS degradation; plateau grid 36 cells → CPCV + DSR mandatory (Bailey-Borwein-Lopez de Prado SSRN 2326253)
 - **Mechanism note:** Institutional execution desks target below-VWAP fills for TCA compliance (Berkowitz/Logue/Noser 1988 JF). Passive buy programs trigger at VWAP − 1σ deviation under ranging conditions. Intraday shorts trapped below VWAP provide covering fuel on recovery. 9th regime axis — mechanistically distinct from all 8 existing freqtrade prims (not oscillator-based, not trend-based, not stop-cluster-based, not vol-based).
 - **Implementation note:** Requires `ta.vwap()` with `anchor='D'` (daily UTC). Currently no YujiVWAPStrategy.py exists; can be added as informative pair to YujiRegimeStrategy or as new strategy file.
-- **Last validated:** never (NEW naive prim, cycle 51; mechanism sourced from equity microstructure literature; crypto transfer unverified; no backtest performed)
+- **Last validated:** cycle 51 naive backtest: WR 67.2% (n=427 BTC/ETH 2023–2024), avg profit −0.11%, Sharpe −0.85, PF 0.78. Signal exists; EV negative = fee drag (0.8% round-trip dominates). Max drawdown 602 days traced to trending VWAP entries.
+
+---
+
+## vwap-deviation-mean-reversion (intermediate) — 2026-04-12
+- **Works when:** FLAT VWAP (VWAP_slope_12h ∈ ±0.5% — not trending away from benchmark) + RANGING regime (ADX < 25) + close ≤ VWAP − 1.25×σ_D + next-candle close > entry_bar_VWAP − 0.5×entry_bar_σ_D (recovery confirmed) + close > 1h EMA200 (structural bull) + 4h EMA200 slope ≥ 0 (macro context) + volume ≥ 0.8×SMA(20) (participation filter) + 4h RSI > 25 (anti-freefall); BTC/USDT or ETH/USDT only; 1h TF
+- **Fails when:** VWAP slope outside ±0.5%/12-bar — **primary failure mode: 602-day drawdown traced here; trending VWAP = directional position, not mean reversion, institutional passive bids absent**; ADX ≥ 25 (trending market); 4h EMA200 slope < 0 (secular bear — long-term buy programs suppressed); no next-candle confirmation (continuation breakdown); volume < 0.8×SMA (low-participation gap-fill risk); 4h RSI < 25 (news-driven freefall); altcoins/low-liquidity pairs; weekend/low-volume UTC distortions
+- **Best pair(s):** BTC/USDT, ETH/USDT (institutional VWAP tracking hypothesis; altcoins excluded)
+- **Best timeframe:** 1h primary (next-candle confirmation requires 1h resolution; 4h secondary for macro gates)
+- **R:R:** 1.67:1 at 1.25σ entry / 2.0σ stop (profit = 1.25σ, risk = 0.75σ). EV-positive when WR ≥ 37% after 0.8% round-trip fees (vs naive breakeven WR 55% at 1:1 R:R).
+- **Key numbers:** Naive backtest WR 67.2% (n=427; signal confirmed); avg profit target ≥ 0.5%/trade intermediate; IS Sharpe target ≥ 0.70 (McLean-Pontiff OOS guard); 36-cell plateau grid (vwap_band_entry [0.75–1.5] × adx_max [20–30] × std_period [14–30]) → CPCV + DSR mandatory; Almgren & Chriss (2001 JRF): VWAP-anchored execution is optimal schedule, confirming institutional structural constraint
+- **Mechanism note:** Almgren & Chriss (2001) formalises VWAP-anchored execution as the optimal schedule minimising implementation shortfall — passive buy programs activate when price falls below VWAP under flat-VWAP (ranging) conditions. VWAP slope gate isolates the condition where benchmark gravity operates. Custom stoploss anchored to entry-bar VWAP/σ_D prevents rolling VWAP from misfiring the stop.
+- **Last validated:** cycle 53 intermediate elevation (analytical only; intermediate backtest pending; 7 implementation gaps applied to YujiVWAPMeanReversionStrategy.py)
 
 ---
 
