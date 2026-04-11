@@ -24,7 +24,11 @@ budget_cents() {
 
 init_budget() {
   if [ ! -f "$BUDGET_FILE" ]; then
-    echo '{"window_start":0,"cost_cents":0,"cycles_run":0,"last_reset":0}' > "$BUDGET_FILE"
+    echo '{"window_start":0,"cost_cents":0,"cycles_run":0,"last_reset":0,"last_cycle":0}' > "$BUDGET_FILE"
+  fi
+  # Migrate old budget files missing last_cycle
+  if ! jq -e '.last_cycle' "$BUDGET_FILE" >/dev/null 2>&1; then
+    jq '. + {"last_cycle": 0}' "$BUDGET_FILE" > "$BUDGET_FILE.tmp" && mv "$BUDGET_FILE.tmp" "$BUDGET_FILE"
   fi
   if [ ! -f "$COST_MODEL_FILE" ]; then
     cat > "$COST_MODEL_FILE" <<'EOF'
@@ -44,9 +48,28 @@ check_window_reset() {
   local window_start
   window_start="$(jq -r '.window_start' "$BUDGET_FILE")"
 
+  # Standard 5-hour window expiry
   if [ "$window_start" -eq 0 ] || [ $((now - window_start)) -ge "$WINDOW_SECONDS" ]; then
     jq --arg now "$now" '.window_start = ($now|tonumber) | .cost_cents = 0 | .cycles_run = 0 | .last_reset = ($now|tonumber)' \
       "$BUDGET_FILE" > "$BUDGET_FILE.tmp" && mv "$BUDGET_FILE.tmp" "$BUDGET_FILE"
+    return 0
+  fi
+
+  # Stale-state heuristic: if budget is high but no cycle has run in >1h,
+  # the actual Claude session has likely refreshed. Reset our tracker.
+  local last_cycle cost_cents budget_c percent idle_seconds
+  last_cycle="$(jq -r '.last_cycle // 0' "$BUDGET_FILE")"
+  cost_cents="$(jq -r '.cost_cents' "$BUDGET_FILE")"
+  budget_c="$(budget_cents)"
+  percent="$((cost_cents * 100 / budget_c))"
+
+  if [ "$last_cycle" -gt 0 ] && [ "$percent" -ge 50 ]; then
+    idle_seconds=$((now - last_cycle))
+    if [ "$idle_seconds" -ge 3600 ]; then
+      # >1h idle with significant budget used → assume session refreshed
+      jq --arg now "$now" '.window_start = ($now|tonumber) | .cost_cents = 0 | .cycles_run = 0 | .last_reset = ($now|tonumber) | .last_cycle = 0' \
+        "$BUDGET_FILE" > "$BUDGET_FILE.tmp" && mv "$BUDGET_FILE.tmp" "$BUDGET_FILE"
+    fi
   fi
   return 0
 }
@@ -97,8 +120,10 @@ record_usage() {
 
   check_window_reset
 
-  # Update budget file
-  jq --argjson c "$cost_cents" '.cost_cents += $c | .cycles_run += 1' \
+  # Update budget file (track last cycle timestamp for stale-state detection)
+  local now
+  now="$(date +%s)"
+  jq --argjson c "$cost_cents" --arg n "$now" '.cost_cents += $c | .cycles_run += 1 | .last_cycle = ($n|tonumber)' \
     "$BUDGET_FILE" > "$BUDGET_FILE.tmp" && mv "$BUDGET_FILE.tmp" "$BUDGET_FILE"
 
   # Update cost model — rolling average of last 10 samples
