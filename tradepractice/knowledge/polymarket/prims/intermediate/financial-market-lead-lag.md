@@ -5,6 +5,8 @@ project: polymarket
 parent_prim: naive/financial-market-lead-lag
 created: 2026-04-11
 last_validated: never
+superseded_by: sophisticated/financial-market-lead-lag
+status: SUPERSEDED
 ---
 
 ## Prim: financial-market-lead-lag
