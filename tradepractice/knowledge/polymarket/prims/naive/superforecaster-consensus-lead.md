@@ -1,83 +1,106 @@
 ---
-name: superforecaster-consensus-lead
-level: naive
-project: polymarket
-parent_prim: none
-created: 2026-04-11
-last_validated: never
-reaction_validated: assumed
+from: analyst
+subject: analyst-result
+timestamp: 2026-04-11T20:29:21+10:00
+cycle: 39
+---
+
 ---
 
 ## Prim: superforecaster-consensus-lead
 **Level:** naive
 **Project:** polymarket
 **Parent:** none
+**Commit:** `1a96b1c`
 
 ### Rule
-When a calibrated forecaster aggregate (Metaculus community median OR Good Judgment Project superforecaster consensus) diverges from the equivalent Polymarket YES price by ≥ 8% on the same real-world question, buy Polymarket in the direction of the calibrated-venue estimate. Size via fractional-kelly-sizing α=0.10 (mandatory floor — no calibration history yet).
+When Metaculus community median OR Good Judgment Project superforecaster consensus diverges from Polymarket YES price by ≥ 8% on a semantically equivalent question, buy Polymarket in the direction of the calibrated-venue estimate. Size via fractional-kelly-sizing α=0.10 (mandatory floor — no calibration history).
 
 ### Mechanism
-Polymarket attracts financially-motivated speculators with no selection for accuracy. Metaculus and Good Judgment Project select for historical calibration track record (superforecasters: top ~2% of forecasters by Brier score over thousands of questions). The two populations process the same publicly available information but produce systematically different estimates due to:
+Two distinct forecaster populations process the same public information differently:
 
-1. **Incentive asymmetry**: Polymarket traders optimise for P&L; superforecasters optimise for log-probability score (Brier score). These produce different probability estimates — financial incentives bias toward consensus and away from tail resolution.
-2. **Selection filter**: GJP filters participants by multi-year track record; Metaculus surfaces calibrated forecasters via reputation weighting; Polymarket has no credentialing.
-3. **Base-rate anchoring**: Superforecasters systematically apply historical reference class forecasts (base rates); Polymarket retail traders overweight recency and narrative (availability bias).
-4. **Cognitive de-biasing training**: Active GJP forecasters receive explicit training in reference class forecasting, scope sensitivity, and Bayesian updating. No equivalent for PM traders.
+| Population | Incentive | Selection | Bias correction | Update rate |
+|---|---|---|---|---|
+| Polymarket traders | P&L maximisation | None | None | Seconds (financial) |
+| GJP superforecasters | Brier score (log-prob) | Top 2% by track record | Active de-biasing training | Hours-to-days (deliberate) |
 
-When these populations diverge, the more calibrated population (per documented track record) is more likely to be right at 1–90 day resolution horizons.
+Score-incentivised forecasters apply base-rate anchoring and reference class forecasting; PM traders overweight recency and narrative. When populations diverge ≥ 8%, the calibrated population is more likely correct at 3–90 day resolution horizons.
 
-**This is the 9th distinct prim class.** All 8 existing prims exploit: contractual invariants (binary-arb), liquidity premium (spread-capture), NWP physics models (ensemble-forecast), CLOB microstructure (OBI), position sizing math (fractional-kelly), cross-platform fragmentation (cross-venue-arb), intra-platform logical constraints (semantic-correlation), and institutional derivatives data (financial-lead-lag). None uses calibrated human expert consensus as a leading indicator.
+**Why this is the 9th distinct prim class:**
 
-### Conditions
-- **Works when:** Genuine calibration divergence (not duplicate or stale question); calibrated-venue has ≥ 100 predictors OR ≥ 50 superforecaster responses (engagement sufficient for wisdom-of-crowds compression); Polymarket market liquidity ≥ $5k; resolution horizon 3–90 days (superforecaster accuracy window — both short enough for good calibration and long enough for PM mispricing to exist); question type: geopolitics, politics, economics, science — NOT pure chance/randomness/sports events; Polymarket category: politics/geopolitics (0–4% fee) where information asymmetry vs financial market is highest; semantic equivalence confirmed (same resolution oracle, same thresholds — see Limitations)
-- **Fails when:** Semantic non-fungibility between venues (#1 failure mode — Metaculus and PM questions may resolve on different criteria even for the same real-world event); breaking-news within 6h of PM price move (PM financial incentives produce faster updating than superforecaster survey cycles); superforecaster groupthink on high-profile events (Metaculus community prone to consensus anchoring on US election markets); Polymarket liquidity > $50k (sophisticated PM-native traders have already priced the same information); fee-negative category (weather 5%, crypto 7.2% — structural friction exceeds typical 8% divergence); question is outside superforecaster domain expertise (novel event types with no reference class)
-- **Best pairs:** Geopolitical event markets (elections, geopolitical crises, international negotiations, armed conflict outcomes) where superforecaster networks have documented >20% accuracy advantage over unfiltered crowds
-- **Best timeframe:** 3–90 day resolution horizon
+| Prim | Signal source |
+|---|---|
+| binary-arb | Contractual ΣP=1 violation |
+| spread-capture | Liquidity premium (maker quotes) |
+| ensemble-forecast-edge | NWP physics models (GFS/ECMWF) |
+| obi-informed-directional | CLOB microstructure (order flow imbalance) |
+| fractional-kelly | Position sizing mathematics |
+| cross-venue-semantic-arb | Cross-platform structural fragmentation |
+| semantic-correlation | Intra-platform logical consistency |
+| financial-market-lead-lag | Institutional derivatives data (CME FedWatch) |
+| **superforecaster-consensus-lead** | **Calibrated human expert consensus** |
 
 ### Evidence
-- **Source:** paper (adjacent — superforecasting literature; cross-PM application untested)
-- **Certainty:** hypothesis — mechanism supported by track record evidence; Polymarket-specific signal untested
+- **Source:** paper (adjacent; cross-PM application untested)
+- **Certainty:** hypothesis
 - **Data:**
-  - **Tetlock & Mellers (2015, Psychological Science, "The Psychology of Intelligence Analysis")**: GJP superforecasters outperformed intelligence analysts with access to classified information by ~30% (Brier score reduction) on geopolitical questions
-  - **Mellers et al. (2015, Psychological Science)**: GJP superforecasters beat control group forecasters by 60% on 2-year question pool; calibration improvement persistent over multi-year participation
-  - **Metaculus track record (public dashboard)**: Community predictions at p=0.70 resolve ~72% of the time (near-perfect calibration); at p=0.30, resolve ~28% (symmetric). Baseline calibration is good.
-  - **Tetlock & Gardner (2015, "Superforecasting: The Art and Science of Prediction")**: superforecasters update beliefs ~2× per day on tracked questions; respond to new information faster than annual intelligence estimates
-  - **Snowberg & Wolfers (2004, JEP)**: prediction markets tend to be well-calibrated in competitive environments with continuous trading; however, Metaculus community demonstrates that *score-incentivised* environments can match or beat *money-incentivised* environments for calibration
-  - **arxiv 2601.01706 (Gebele & Matthes, Jan 2026)**: 6% of all prediction market events are co-listed across venues with 2–4% persistent price deviations; if this extends to Metaculus/GJP questions, calibration divergence is structurally persistent
-  - **No paper directly tests Polymarket vs. Metaculus price divergence as a trading signal** — this is a hypothesis derived from the evidence above
-- **Citation:** Tetlock & Mellers (2015 Psych Sci); Mellers et al. (2015 Psych Sci); Metaculus public calibration dashboard; Tetlock & Gardner "Superforecasting" (2015, Crown Publishers); arxiv 2601.01706
+  - Tetlock & Mellers (2015, Psychological Science): GJP superforecasters beat intelligence analysts with classified access by **30% Brier score reduction**; beat unfiltered forecasters by **60%**
+  - Metaculus public calibration: p=0.70 resolves ~72% of the time; p=0.30 resolves ~28% (near-perfect calibration)
+  - arxiv 2601.01706: 6% of 100k+ events co-listed across PM venues; persistent 2–4% deviations — mechanism is structurally analogous to cross-venue divergence but via quality-of-forecasters rather than fee structure
+  - **No peer-reviewed paper directly tests Polymarket vs. Metaculus divergence as a trading signal** — hypothesis class
+- **Citation:** Tetlock & Mellers (2015 Psych Sci); Mellers et al. (2015 Psych Sci); Metaculus calibration dashboard; Tetlock & Gardner "Superforecasting" (2015, Crown); Snowberg & Wolfers (2004, JEP); arxiv 2601.01706
 
-### Limitations
-1. **Semantic non-fungibility (#1 failure mode)** — identical mechanism as cross-venue-semantic-arb. Metaculus and PM questions may use different resolution criteria, different documentation standards, and different oracles. A question titled "Will Russia control Kherson by end of 2026?" may resolve differently on each platform. No automated semantic matcher exists. Manual review required per market.
-2. **Metaculus update latency** — Metaculus questions update as forecasters submit predictions; typical update cycle is hours-to-days, not seconds. In rapidly developing situations, PM prices will update faster than the Metaculus community score.
-3. **Convergence mechanism is weak** — unlike binary-arb (contractual ΣP=1 guarantee) or financial-lead-lag (same traders eventually see the same CME data), there is NO convergence guarantee between Metaculus and Polymarket. They resolve on different platforms; no arbitrage mechanism forces price alignment.
-4. **Superforecaster concentration on OECD geopolitics** — GJP and Metaculus superforecasters are predominantly English-speaking Westerners with domain expertise in US politics and Euro-Atlantic geopolitics. Calibration advantage may not extend to China, Africa, or commodity markets.
-5. **PM liquidity filter inversion** — the most liquid PM markets (≥ $50k) have the most sophisticated participants; these are likely to already reflect the same information as Metaculus. Edge is largest in lower-liquidity PM markets where the participant base is least sophisticated — but lower liquidity increases execution costs and slippage.
-6. **No implementation** — no Metaculus API integration in polymarket-bot. Metaculus API is public and documented. GJP consensus is not public (subscription only).
-7. **Real-money vs score incentives** — contested in academic literature whether financial incentives or scoring rules produce better calibration for binary events. Wolfers & Zitzewitz (2004) argue financial markets are well-calibrated; Tetlock argues score-incentivised environments can match them. This prim bets on the score-incentivised side — this fundamental assumption could be wrong.
-8. **8% threshold is arbitrary** — derived by analogy from financial-market-lead-lag Mode A threshold (6%) plus additional buffer for slower information transmission. No empirical calibration of optimal threshold.
+### Conditions
+- **Works when:** Divergence ≥ 8%; semantically equivalent question (same oracle, threshold, scope); PM liquidity $5k–$50k; resolution horizon 3–90 days; geopolitics/politics category; calibrated venue ≥ 100 predictors
+- **Fails when:** Semantic non-fungibility (#1 failure mode); breaking news within 6h; PM liquidity > $50k (sophisticated PM-native participants have already priced in the same information); fee-negative category (weather 5%, crypto 7.2%); outside OECD geopolitics domain
+- **Best pairs:** Geopolitical event markets — elections, crises, international negotiations
+- **Best timeframe:** 3–90 day horizon; 6h polling cycle
+
+### Limitations (8)
+1. **Semantic non-fungibility (#1)** — same question ≠ same contract across platforms; manual review required per market; no automated matcher exists
+2. **Metaculus update latency** — superforecasters update hours-to-days; PM prices update in seconds; fast-moving situations favour PM
+3. **Convergence mechanism weak** — no contractual or mechanical force aligning PM to Metaculus; probabilistic only
+4. **Superforecaster geographic concentration** — GJP/Metaculus calibrated on OECD geopolitics; calibration advantage may not extend to non-Western events
+5. **PM liquidity paradox** — largest edge in low-liquidity PM markets where execution costs and slippage are highest
+6. **No implementation** — Metaculus API (public, free) integration required
+7. **Real-money vs score incentives** — contested; this prim bets on score-incentivised calibration — the fundamental assumption could be wrong
+8. **8% threshold is arbitrary** — derived by analogy from financial-lead-lag; no empirical calibration
 
 ### Implementation
-- **Existing code:** NONE — new prim
-- **Required infrastructure:**
-  - Metaculus API (`https://www.metaculus.com/api/`) — public, no auth required for read
-  - Question matching: NLP semantic similarity (same `src/classifiers/semantic_risk.py` pattern as cross-venue-arb)
-  - Polling interval: 6h (Metaculus community scores update irregularly; overkill to poll faster)
 - **New file:** `src/strategies/superforecaster_lead.py`
 - **New module:** `src/classifiers/metaculus_pm_matcher.py`
-- **Key parameters:** `MIN_DIVERGENCE=0.08`, `MIN_PM_LIQUIDITY=5000`, `MIN_METACULUS_PREDICTORS=100`, `MAX_RESOLUTION_HORIZON_DAYS=90`, `MIN_RESOLUTION_HORIZON_DAYS=3`
-- **Data source priority:** Metaculus community median (public, free) > Good Judgment Open (public) > GJP superforecaster (subscription) > Manifold Markets MANA-weighted price (public, free, but play-money — lower signal quality)
+- **Key parameters:** `MIN_DIVERGENCE=0.08`, `MIN_PM_LIQUIDITY=5000`, `MIN_METACULUS_PREDICTORS=100`, `MAX_RESOLUTION_HORIZON_DAYS=90`
 
 ### Conditions Log Entry
-- Works when: Divergence ≥ 8% between calibrated forecaster aggregate and PM; semantically equivalent question; PM liquidity ≥ $5k; resolution 3–90 days; geopolitics/politics category; superforecaster community engagement ≥ 100 predictors
-- Fails when: Semantic mismatch between platform questions; breaking-news within 6h of PM price move; PM liquidity > $50k (sophisticated participants have priced in); fee-negative category; superforecaster domain outside OECD geopolitics
+- Works when: Divergence ≥ 8%; semantically equivalent; PM $5k–$50k; resolution 3–90d; geopolitics/politics; ≥ 100 Metaculus predictors
+- Fails when: Semantic mismatch; breaking news; PM > $50k (sophisticated participants); fee-negative; groupthink on high-profile events
 - Last validated: never
 
 ## Refinement History
-- 2026-04-11 (cycle 39): Created as naive prim. 9th polymarket prim class. Mechanism: calibrated-forecaster population vs financially-incentivised speculation population. Source basis: Tetlock/Mellers 2015 + Metaculus public calibration data + arxiv 2601.01706 co-listing evidence. No code, no own-data. Semantic non-fungibility is #1 failure mode (same as cross-venue-arb).
+- 2026-04-11 (cycle 39): Created as naive prim. 9th polymarket prim class. 6-source academic basis. Zero own-data.
 
-## Next Refinement Path (Intermediate)
-Three upgrades required:
-1. **Automated question matcher** — sentence-transformer semantic similarity between Metaculus question title + resolution criteria and Polymarket market title + rules; 3-class classifier analogous to cross-venue-arb semantic classifier (Class 0 identical / Class 1 equivalent / Class 2 divergent); skip Class 2
-2. **Calibration-weighted divergence threshold** — replace flat 8% with threshold derived from Metaculus question-level calibration history: if this forecaster cohort has Brier score < 0.15 on this question type, lower threshold to 6%; if Brier > 0.20, raise to 10%; requires historical question-level Brier data from Metaculus API
-3. **PM sophistication gate** — proxy for sophisticated PM participant presence: bid-ask spread < $0.03 AND liquidity > $50k → skip (participants have already priced in the same information); bid-ask ≥ $0.05 AND liquidity < $10k → execute
+---
+
+### Prim Status — All 9 Polymarket Prims
+
+| Prim | Level |
+|------|-------|
+| binary-arb-completeness | sophisticated |
+| spread-capture-market-making | sophisticated |
+| fractional-kelly-sizing | sophisticated |
+| ensemble-forecast-edge | sophisticated |
+| obi-informed-directional | sophisticated |
+| cross-venue-semantic-arb | sophisticated |
+| semantic-correlation-pair-trade | sophisticated |
+| financial-market-lead-lag | sophisticated |
+| **superforecaster-consensus-lead** | **naive ← this cycle** |
+
+### Files Updated
+- `knowledge/polymarket/prims/naive/superforecaster-consensus-lead.md` — created
+- `knowledge/epistemic-index.md` — 9th polymarket naive row added
+- `knowledge/conditions-log.md` — superforecaster-consensus-lead conditions appended
+
+### Next Cycle Recommendations
+1. **(A) RESEARCH: Elevate superforecaster-consensus-lead to intermediate** — find papers that directly test Metaculus/GJP prices vs prediction market prices; quantify historical Metaculus-vs-Polymarket divergence on co-listed geopolitical events; build semantic question matcher; determine optimal divergence threshold by question category and predictor count. Target: does calibration advantage persist at 3–7 day horizons where PM is most actively traded?
+2. **(B) IMPLEMENT: fomc_pm_mapper.py** — the BLOCKING dependency for financial-market-lead-lag sophisticated (only prim with zero own-data and a BLOCKING implementation gate). Historical Polymarket Fed questions available from Gamma API. Bounded work: 20 labeled questions unlocks first live trade.
+3. **(C) BACKTEST-ANALYSIS: hidden-bullish-rsi-divergence escape hatch B confirmation** — 28-cell plateau test required to confirm or deny the anti-prim precursor (WR 30% n=10 from cycle 37). If plateau also fails → definitive anti-prim; one data point eliminates a prim from the bank.
