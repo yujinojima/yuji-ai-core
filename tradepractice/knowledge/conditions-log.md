@@ -191,7 +191,10 @@
 - **Critical unknowns:** Optimal fraction for this edge distribution (0.15 is arbitrary); no correlation adjustment for concurrent bets; no drawdown-based bankroll update; bankroll proxy (max_position*10) vs actual capital
 - **Last validated:** never
 
-## fractional-kelly-sizing (intermediate) — 2026-04-10
+## fractional-kelly-sizing (intermediate → sophisticated)
+- **Status:** SUPERSEDED by sophisticated prim. See sophisticated entry below.
+
+## fractional-kelly-sizing (intermediate) — 2026-04-10 [historical]
 - **Works when:** Edge source has measurable calibration quality (Brier score or IS/OOS accuracy); dynamic bankroll tracked after each resolution; N concurrent bets ≤ 5; binary markets with defined resolution horizon; edge > 3x execution friction
 - **Fails when:** Uncalibrated edge used with 0.50 tier (ruin risk from amplified estimation error — 10% edge overestimate → ~2x bet size); N > 5 correlated bets without portfolio-level Kelly; bankroll proxy instead of actual capital; $100 hard MAX_BET cap overrides Kelly at bankroll > $13k; single catastrophic resolution on wrong-side inventory; long-horizon lockup (>7d) without discount factor applied to fraction
 - **Best pair(s):** All binary Polymarket markets where edge source has calibration evidence
@@ -201,6 +204,17 @@
 - **Evidence:** 4 sources — arxiv 2412.14144 (Meister Dec 2024), arxiv 2604.03888 (PolySwarm), MacLean et al. (Good and Bad Properties of Kelly), mbotopoly.com prediction market risk guide
 - **Implementation gaps:** (1) Calibration score logging system needed (predictions vs outcomes → Brier score), (2) true bankroll from balance API, (3) portfolio-level covariance Kelly for correlated weather bets, (4) resolution-horizon discount factor
 - **Last validated:** never (needs live trade history with outcome tracking)
+
+## fractional-kelly-sizing (sophisticated) — 2026-04-11
+- **Works when:** Calibration RMSE tier confirmed (N ≥ 30 for α=0.25, N ≥ 50 for α=0.50); `edge_adj = edge_gross − 0.05·T/365 > 2 × RMSE`; N_eff = N/(1+(N−1)·ρ̄) ≥ 1.2 across concurrent positions; bankroll from actual USDC balance API; circuit-breaker state ≠ PAUSED; T ≤ 30 days (or explicit tier review for longer); per-bet size ≥ $5
+- **Fails when:** N < 30 resolved trades (α=0.10 floor mandatory); RMSE > 12% (Kelly oversizes when wrong — flat sizing preferred); N_eff < 1.2 (correlated weather cluster — N concurrent same-city brackets with ρ > 0.75 give functionally 1 position with N× loss exposure); bankroll proxy (`max_position_usd × 10` can be 10× wrong); drawdown > 40% (circuit-breaker PAUSED); edge_adj < 0 (horizon discount exceeds edge on thin long-dated markets)
+- **Key numbers:** Growth loss from miscalibration: Δg ≈ ε²/(2·p·(1−p)) per bet (arxiv 2412.14144) — at RMSE=12%, loss = 2.9%/bet = 36% of 8% edge; N_eff for N=5 same-city (ρ=0.80) = 1.22 (vs naive 1/sqrt(5)=2.24 — 45% undersize of concentration risk); MacLean-Hakansson P(halving before doubling): full Kelly 33%, half 9%, quarter 3%; Brier ≤ 0.30 (intermediate threshold) corrected to RMSE < 5% via KL-divergence analysis
+- **RMSE tier boundary derivation:** β=0.20 tolerable edge loss → ε_max = sqrt(β·E·2·p·(1−p)); at E=0.08, p=0.55: ε_max = 0.089 → practical safety margin → 5% boundary for α=0.50; 12% for α=0.25
+- **Circuit-breaker states:** NORMAL (drawdown < 20%) multiplier=1.0; REDUCED (20–40%) multiplier=0.50; PAUSED (>40%) multiplier=0.0; recovery to NORMAL when drawdown < 5% from peak
+- **Geographic ρ benchmarks:** same city/multiple brackets ρ=0.70–0.85; city pairs <100km ρ≈0.60–0.75; 100–500km ρ≈0.30–0.50; >1000km ρ≈0.05–0.20
+- **Evidence:** 4 academic sources — arxiv 2412.14144 (KL-divergence growth formula), arxiv 2604.03888 (PolySwarm quarter-Kelly), MacLean-Thorp-Ziemba 2011 (halving tables), Kelly 1956 (foundational)
+- **Implementation gaps:** (1) `CalibrationTracker` class with `record(p_hat, outcome)` + `fraction_tier()` → `user_data/calibration_log.json`, (2) `CircuitBreaker` state machine persisted to `user_data/circuit_breaker.json`, (3) `KellyCalculator.calculate()` integrating N_eff, horizon discount, circuit-breaker multiplier, (4) USDC balance API call on every sizing computation, (5) `strategy.py` replaces inline `kelly_bet()` with `KellyCalculator.calculate()`
+- **Last validated:** never (calibration log pipeline not yet implemented; N=0 resolved trades; sophisticated tier blocked pending: CalibrationTracker implementation, first 30 resolved trades to exit α=0.10 floor, head-to-head comparison vs flat $25/trade baseline)
 
 ---
 
