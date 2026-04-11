@@ -554,3 +554,4 @@
   Stop:    ./stop.sh
   Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
 
+[2026-04-12 09:10:01] SKIP: tradepractice actively running
