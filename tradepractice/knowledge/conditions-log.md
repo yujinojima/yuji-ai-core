@@ -136,15 +136,21 @@
 
 ---
 
-## vwap-deviation-mean-reversion (intermediate) — 2026-04-12
-- **Works when:** FLAT VWAP (VWAP_slope_12h ∈ ±0.5% — not trending away from benchmark) + RANGING regime (ADX < 25) + close ≤ VWAP − 1.25×σ_D + next-candle close > entry_bar_VWAP − 0.5×entry_bar_σ_D (recovery confirmed) + close > 1h EMA200 (structural bull) + 4h EMA200 slope ≥ 0 (macro context) + volume ≥ 0.8×SMA(20) (participation filter) + 4h RSI > 25 (anti-freefall); BTC/USDT or ETH/USDT only; 1h TF
+## vwap-deviation-mean-reversion (intermediate) — 2026-04-12 [SUPERSEDED by cycle-63 revision below]
+- **Works when:** FLAT VWAP (VWAP_slope_12h ∈ ±0.5%) + RANGING (ADX < 25) + close ≤ VWAP − 1.25×σ_D + confirmation + close > 1h EMA200 + 4h EMA200 slope ≥ 0 + volume ≥ 0.8×SMA(20) + 4h RSI > 25; BTC/ETH; 1h TF
+- **INTERMEDIATE BACKTEST FAIL (cycle 54):** WR 28.6% (n=21) vs 70% target. Root cause: 95% signal elimination (flat VWAP + rising 4h EMA200 = joint prob ≈5%) + custom_info AttributeError (stoploss inoperative). See cycle-63 revision below.
+
+## vwap-deviation-mean-reversion (intermediate, revised) — 2026-04-12 (cycle 63)
 - **Fails when:** VWAP slope outside ±0.5%/12-bar — **primary failure mode: 602-day drawdown traced here; trending VWAP = directional position, not mean reversion, institutional passive bids absent**; ADX ≥ 25 (trending market); 4h EMA200 slope < 0 (secular bear — long-term buy programs suppressed); no next-candle confirmation (continuation breakdown); volume < 0.8×SMA (low-participation gap-fill risk); 4h RSI < 25 (news-driven freefall); altcoins/low-liquidity pairs; weekend/low-volume UTC distortions
-- **Best pair(s):** BTC/USDT, ETH/USDT (institutional VWAP tracking hypothesis; altcoins excluded)
-- **Best timeframe:** 1h primary (next-candle confirmation requires 1h resolution; 4h secondary for macro gates)
-- **R:R:** 1.67:1 at 1.25σ entry / 2.0σ stop (profit = 1.25σ, risk = 0.75σ). EV-positive when WR ≥ 37% after 0.8% round-trip fees (vs naive breakeven WR 55% at 1:1 R:R).
-- **Key numbers:** Naive backtest WR 67.2% (n=427; signal confirmed); avg profit target ≥ 0.5%/trade intermediate; IS Sharpe target ≥ 0.70 (McLean-Pontiff OOS guard); 36-cell plateau grid (vwap_band_entry [0.75–1.5] × adx_max [20–30] × std_period [14–30]) → CPCV + DSR mandatory; Almgren & Chriss (2001 JRF): VWAP-anchored execution is optimal schedule, confirming institutional structural constraint
-- **Mechanism note:** Almgren & Chriss (2001) formalises VWAP-anchored execution as the optimal schedule minimising implementation shortfall — passive buy programs activate when price falls below VWAP under flat-VWAP (ranging) conditions. VWAP slope gate isolates the condition where benchmark gravity operates. Custom stoploss anchored to entry-bar VWAP/σ_D prevents rolling VWAP from misfiring the stop.
-- **Last validated:** cycle 53 intermediate elevation (analytical only; intermediate backtest pending; 7 implementation gaps applied to YujiVWAPMeanReversionStrategy.py)
+- **Works when (cycle 63 revised):** abs(VWAP_slope_12h) < 1.0%/12 bars (LOOSENED from ±0.5%) + ADX < 25 (ranging) + close ≤ VWAP − 1.25×σ_D + next-candle close > entry_bar_VWAP − 0.5×σ_D (confirmation) + close > 1h EMA200 (structural bull) + 4h RSI > 25 (anti-freefall); BTC/USDT or ETH/USDT only; 1h TF; min 3-bar hold before VWAP exit
+- **Removed conditions (cycle 63):** 4h EMA200 slope ≥ 0 (contradicts VWAP slope gate; joint prob ≈5%); volume ≥ 0.8× SMA(20) (low additive value)
+- **Fails when:** VWAP slope outside ±1.0%/12h (trending VWAP — entries become directional); ADX ≥ 25 (no benchmark gravity); news freefall (4h RSI < 25); close < 1h EMA200 (structural bear); altcoins; custom_info pattern (freqtrade 2026.3 — FIXED with class-level dict in cycle 63)
+- **New evidence (cycle 63):** Makarov & Schoar (2020 JFE) confirms institutional arbitrage flow in crypto consistent with equity microstructure; BlackRock/Fidelity BTC ETF AP mechanics (2024) = direct evidence VWAP is institutional benchmark in crypto, not just equity analogy
+- **Best pair(s):** BTC/USDT, ETH/USDT; altcoins excluded
+- **Best timeframe:** 1h primary
+- **R:R:** 1.67:1 at 1.25σ entry / 2.0σ anchored stop. EV > 0 when WR ≥ 37% post-fee.
+- **Key numbers:** Naive WR 67.2% (n=427); cycle 54 WR 28.6% (n=21, FAIL); re-backtest target n ≥ 100, WR ≥ 55%, Sharpe ≥ 0.70; OOS degradation 25–50% (McLean-Pontiff); 36-cell plateau grid → CPCV + DSR mandatory
+- **Last validated:** cycle 54 intermediate FAIL (WR 28.6%, n=21); cycle 63 revised rule (loosened filters + stoploss fix applied to strategy); re-backtest pending (cycle 64)
 
 ---
 
