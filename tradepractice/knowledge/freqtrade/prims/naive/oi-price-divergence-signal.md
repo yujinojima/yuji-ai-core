@@ -80,9 +80,9 @@ Academic anchor: Bessembinder & Seguin (1993, Journal of Finance) — OI reflect
 10. **Traditional futures → crypto transfer uncertainty.** Bessembinder & Seguin (1993) and Chatrath et al. (1996) studied agricultural and financial futures with different microstructure (floor trading, different liquidity profiles, no 24/7 market). Crypto OI dynamics have additional noise from retail leverage, liquidation cascades, and CEX-specific liquidation engines. The mechanism plausibly transfers but WR in crypto is genuinely unknown.
 
 ## Implementation
-- **File:** New strategy file required: `YujiOIPriceDivergenceStrategy.py` (not yet created). Alternatively, add as meta-filter to existing informative-pair strategies.
-- **Data requirement:** `freqtrade download-data --trading-mode futures --pairs BTC/USDT:USDT ETH/USDT:USDT --timeframe 1h --candle-types open_interest`
-- **Informative pairs:** `BTC/USDT:USDT` and `ETH/USDT:USDT` with `candle_type: CandleType.OPEN_INTEREST`
+- **File:** `YujiOIPriceDivergenceStrategy.py` (created 2026-04-12; stubs correctly, no trades fire until OI data available)
+- **Data requirement:** `freqtrade download-data --trading-mode futures --pairs BTC/USDT:USDT ETH/USDT:USDT --timeframe 1h --candle-types open_interest` — **BLOCKED**: freqtrade 2026.3 does not support `open_interest` as a valid `--candle-types` argument (valid: spot, futures, mark, index, premiumIndex, funding_rate). `CandleType.OPEN_INTEREST` does not exist in the enum. Resolution: await upstream freqtrade PR or implement external OI ingestion pipeline.
+- **Informative pairs:** `BTC/USDT:USDT` and `ETH/USDT:USDT` with `candle_type: CandleType.OPEN_INTEREST` — not yet wired (enum member absent in 2026.3; see above)
 - **Parameter:** `oi_change_threshold=0.05`, `oi_lookback=20`, `rsi_max=40` (all untuned)
 - **Code:**
 
@@ -126,3 +126,4 @@ dataframe['oi_covering_rally'] = (
 
 ## Refinement History
 - 2026-04-12: Created as naive prim from traditional futures literature (Bessembinder & Seguin 1993; Hong & Yogo 2012; Chatrath et al. 1996). 11th freqtrade mechanism axis: positioning exhaustion via OI-price divergence. Mechanistically distinct from funding-rate-crowding-reversal (carry cost/flow vs positioning stock) and capitulation-exhaustion-reversal (RSI<20 extreme distress vs moderate RSI 30–45 zone). Data download + frequency scan required before intermediate elevation.
+- 2026-04-12: `YujiOIPriceDivergenceStrategy.py` created (tradepractice cycle 5). Strategy validates OK (freqtrade list-strategies: OK). NEW BLOCKER discovered: `CandleType.OPEN_INTEREST` absent from freqtrade 2026.3 enum; `--candle-types open_interest` also rejected by CLI. Strategy stubs OI as NaN — no trades fire. This additional blocker must be resolved (upstream freqtrade or external OI pipeline) before any backtest is possible. Intermediate elevation now has 2 blockers: (1) OI candle support in freqtrade, (2) Binance #12583 data completeness check.
