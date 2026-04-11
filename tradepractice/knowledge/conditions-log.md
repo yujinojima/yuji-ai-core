@@ -339,12 +339,22 @@ Sources:
 - **Implementation gaps:** `YujiExtinctionBurstStrategy.py` needs: (1) regime gate `(close.shift(20) > ema_200_1h.shift(20)) & (ema_200_4h > ema_200_4h.shift(30))`, (2) speed gate `(close.shift(5) - close) / close.shift(5) >= 0.15`, (3) ADX_4h < 40 guard, (4) next-candle entry via `extinction_burst_signal.shift(1) & (close > close.shift(1))`, (5) fixed stop below wick low (remove trailing_stop=True), (6) drop `extinction_burst_partial` and `macro_capitulation` tiers until separately validated
 - **Last validated:** never (intermediate refinement — own-data walk-forward on BTC/ETH 1h 2020–2025 is the blocking requirement; count regime-gated signals first; if n < 20, extend to multi-asset or mark frequency anti-prim)
 
-## obi-informed-directional (naive) — 2026-04-11
+## obi-informed-directional (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## obi-informed-directional (naive) — 2026-04-11 [historical]
 - **Works when:** IR = (V_bid−V_ask)/(V_bid+V_ask) > +0.65 (BUY YES) or < −0.65 (BUY NO); signal persists ≥ 3 consecutive snapshots; market liquidity $1k–$50k; price $0.20–$0.80; time-to-resolution > 2h; total depth ≥ $500 (thin-book guard); bid/ask each ≥ 3 orders
-- **Fails when:** wash-trading-inflated depth (20–60% of Polymarket volume is wash — IR unreliable without wash-adjusted depth); thin book (< $500 total depth; single order creates false IR); price near $0/$1 (structural imbalance, not informational); market already efficient (liquidity > $50k — bots absorb imbalance in <200ms, no actionable window); imminent resolution (< 2h — IR volatility extreme, mechanism undefined)
-- **Best pair(s):** Politics/finance, geopolitics markets (0–4% taker fee → most margin before breakeven)
-- **Best timeframe:** real-time WebSocket; signal window 30s–5min
-- **Key numbers:** 58% directional accuracy at IR > 0.65 (Bawa, arxiv 2603.03152); OBI R² = 0.65 for short-interval variance prediction; wash trading 20–60% of volume (Columbia Nov 2025)
-- **Complementary relationship with spread-capture-market-making sophisticated:** MM prim has gate `|IR| < 0.65` — when IR breaches 0.65, MM exits and OBI directional activates. The two prims are complementary state-machine routes on the same order book data feed
+- **Fails when:** wash-trading-inflated depth (20–60% of Polymarket volume is wash — IR unreliable without wash-adjusted depth); thin book (< $500 total depth; single order creates false IR); price near $0/$1; market already efficient (liquidity > $50k — bots absorb in <200ms); imminent resolution (< 2h)
 - **Evidence:** single academic source (Bawa, arxiv 2603.03152); zero own-data backtest
-- **Last validated:** never (NEW naive prim; no implementation yet; 58% accuracy claim requires independent replication before elevation to intermediate)
+- **Last validated:** never [historical — superseded by intermediate]
+
+## obi-informed-directional (intermediate) — 2026-04-11
+- **Works when:** `IR_clean = (V_bid_5s − V_ask_5s)/(V_bid_5s + V_ask_5s)` (orders resting ≥ 5s only); thin ($2k–$5k): IR_clean > 0.80; mid ($5k–$50k): IR_clean > 0.65; ≥ 3 consecutive 10s snapshots above threshold; geopolitics or politics/finance category; price $0.20–$0.80; time-to-resolution > 2h; total aged depth ≥ $500
+- **Fails when:** sports (45% wash contaminates signal; live scoring → adverse selection <5min — **#1 exclusion**); crypto (7.2% fee, unknown wash rate); liquidity >$50k (bot response <200ms, no actionable window); thin book <$2k (single $1k order creates IR ≈ 0.33–1.0); wash-dominated book (all resting orders <5s); VR >> 1 without directional trigger (mean-reverting regime); resolution < 2h
+- **Best markets:** Geopolitics (0% fee, ~17% wash by election analogy) > politics/finance (4% fee, ~17% wash)
+- **Best timeframe:** Real-time WebSocket; 10s snapshot interval; hold 15–60min by category (politics: 15–30min; geopolitics: 30–60min)
+- **Key numbers:** 58% directional WR at IR > 0.65 mid-liquidity (Bawa; single source); OBI R² = 0.65 (arxiv 2603.03152); sports wash 45%, elections/politics wash ~17% (Columbia SSRN 5714122); VR(6) = 1.84 at political shock (arxiv 2603.03152); breakeven WR at 0% fee = 50.0%; at 4% fee = 52.0%
+- **Complementary state machine:** spread-capture-market-making sophisticated exits when |IR| ≥ 0.65; OBI directional activates — same CLOB depth feed, complementary regime routes
+- **Evidence:** 4 sources — arxiv 2603.03152 (OBI R², VR drift), Columbia SSRN 5714122 (wash rates), arxiv 2507.22712 (order lifetime filtration), Bawa Substack Dec 2025 (58% mid-liquidity claim)
+- **Implementation gaps:** (1) DepthSnapshot needs v_bid_aged/v_ask_aged from order-age tracking, (2) liquidity-tiered threshold selector, (3) Market.category field, (4) category exclusion gate, (5) category-specific hold horizon, (6) CLOB WebSocket order-age feed
+- **Last validated:** never (intermediate refinement; 58% WR is single-source hypothesis; filtration improvement predicted by arxiv 2507.22712 but not own-tested; anti-prim at own-data WR < 52% over 30 trades)
