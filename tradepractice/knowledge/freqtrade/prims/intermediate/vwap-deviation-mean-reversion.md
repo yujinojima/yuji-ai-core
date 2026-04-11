@@ -195,15 +195,94 @@ All 7 gaps must be addressed before intermediate backtest:
 
 ---
 
+### Intermediate Backtest Results — Cycle 54 (2026-04-12)
+
+**Exchange:** Binance (USDT pairs) | **Period:** 2023-01-01 → 2024-12-31 | **Fee:** 0.4% taker
+
+| Metric | Result | Target | Status |
+|--------|--------|--------|--------|
+| Trades | 21 | n/a | CRITICAL — too few |
+| Win Rate | 28.6% | ≥ 70% | MISS |
+| Avg Profit | −0.26% | ≥ 0.5% | MISS |
+| Sharpe | −0.16 | ≥ 0.70 | MISS |
+| Profit Factor | 0.33 | > 1.0 | MISS |
+| Max Drawdown | 2.65% | < 10% | PASS |
+| Market change | +319% | n/a | (benchmark) |
+
+**Verdict: FAIL — all three elevation targets missed by large margins.**
+
+---
+
+### Failure Diagnosis (Cycle 54)
+
+**1. Over-filtering — 95% signal elimination (427 → 21 trades)**
+
+The 7 intermediate filters combined eliminate 95% of naive signals. With only 21 trades over 2 years, results are statistically insignificant and the strategy is untradeable. The filters are mutually reinforcing in a way that selects an extremely rare market condition that may not recur.
+
+Likely culprits for maximum filtering:
+- `vwap_slope_12h < 0.005` combined with `4h EMA200 slope ≥ 0` — flat VWAP + rising macro is a very rare joint condition
+- Next-candle confirmation on top of already-filtered signals reduces further
+- Volume filter + ADX < 25 + flat VWAP all correlated → multiplicative reduction
+
+**2. `custom_info` AttributeError — custom stoploss non-functional**
+
+```
+AttributeError: 'LocalTrade' object has no attribute 'custom_info'
+```
+
+`LocalTrade` (backtesting) in this freqtrade version (2026.3) does not support `custom_info`. The strategy fell back to static `stoploss = -0.05`, but the static stop also never fired (all 21 exits via `exit_signal`). The custom stoploss anchor (VWAP − 2.0σ) was inoperative throughout. Fix: use a class-level dict keyed by trade ID:
+
+```python
+_entry_data: dict = {}  # class-level, keyed by (pair, open_date_utc)
+
+def custom_stoploss(self, pair, trade, ...):
+    key = (pair, trade.open_date_utc)
+    if key not in self._entry_data:
+        df, _ = self.dp.get_analyzed_dataframe(pair, self.timeframe)
+        if df is not None and len(df) > 0:
+            last = df.iloc[-1]
+            self._entry_data[key] = {
+                'entry_vwap': float(last['vwap']),
+                'entry_std': float(last['vwap_std'])
+            }
+    data = self._entry_data.get(key, {})
+    ...
+```
+
+**3. WR collapse from 67.2% (naive) to 28.6% (intermediate)**
+
+Adversarial selection hypothesis: the flat VWAP + rising 4h EMA + confirmation combination selects conditions where price is in a temporary pause within a rising trend. In those conditions, entering on a pullback to VWAP − 1.25σ means the "flat VWAP" is actually at an inflection point where the trend resumes downward before recovery. The confirmation bar (close > VWAP − 0.5σ) may be selecting failed recovery attempts.
+
+**4. VWAP exit instability**
+
+Rolling 24-bar VWAP changes each bar. When entry fires and VWAP drifts lower over holding period, the exit condition `close ≥ VWAP` fires at a price below entry. This explains losses despite VWAP-based exit: the exit target moved toward the entry price and fired early.
+
+---
+
+### Required Changes Before Re-Backtest
+
+| Priority | Change | Rationale |
+|----------|--------|-----------|
+| P0 | Fix `custom_info` → class-level dict | Custom stoploss completely inoperative |
+| P1 | Loosen slope gate: ±0.005 → ±0.01 (1%) | Doubles qualifying conditions; still excludes strong trends |
+| P1 | Remove 4h EMA200 slope gate | Combined with VWAP slope gate = redundant double-filter |
+| P2 | Remove volume filter (0.8× SMA) | Low additive value vs trade count cost |
+| P2 | Add minimum holding bars (e.g., 3) before VWAP exit | Prevents rolling VWAP drift from triggering immediate exit |
+
+Target after loosening: ≥ 100 trades, WR ≥ 50%, before re-evaluating filter combination.
+
+---
+
 ### Conditions Log Entry (for conditions-log.md)
 
 ```
 ## vwap-deviation-mean-reversion (intermediate) — 2026-04-12
 - Works when: FLAT VWAP (slope ∈ ±0.5%/12 bars) + RANGING regime (ADX < 25) + close ≤ VWAP − 1.25×σ_D + next-candle close > entry_bar_VWAP − 0.5×σ_D + close > 1h EMA200 + 4h EMA200 slope ≥ 0 + volume ≥ 0.8× SMA(20) + 4h RSI > 25; BTC/ETH only; 1h TF
+- INTERMEDIATE BACKTEST FAILED (cycle 54): WR 28.6% (21 trades) vs 70% target. Root cause: over-filtering (95% signal reduction) + custom_info bug (stoploss inoperative). Loosening required before re-test.
 - Fails when: VWAP slope outside ±0.5% (trending VWAP — 602-day drawdown failure mode); ADX ≥ 25 (trending market, no benchmark gravity); news-driven freefall (4h RSI < 25); price below 1h EMA200 (structural bear); altcoins/low-liquidity pairs; weekend/low-volume UTC distortions; no next-candle confirmation (continuation breakdown)
 - R:R: 1.67:1 at 1.25σ entry / 2.0σ stop (vs 1.0:1 naive). EV positive when WR ≥ 37% post-fee at this R:R.
-- Key numbers: Naive WR 67.2% n=427 (signal confirmed); avg profit target ≥ 0.5%/trade; IS Sharpe target ≥ 0.70; 36-cell CPCV + DSR mandatory
-- Last validated: cycle 51 naive backtest (WR 67.2% n=427; EV negative — fee drag only); intermediate elevation cycle 53 (analytical only; intermediate backtest pending)
+- Key numbers: Naive WR 67.2% n=427 (signal confirmed); intermediate WR 28.6% n=21 (FAIL — over-filtered); avg profit target ≥ 0.5%/trade; IS Sharpe target ≥ 0.70; 36-cell CPCV + DSR mandatory
+- Last validated: cycle 54 intermediate backtest FAIL (WR 28.6%, n=21, Sharpe -0.16, PF 0.33; custom_info bug confirmed)
 ```
 
 ---
