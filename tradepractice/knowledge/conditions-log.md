@@ -130,7 +130,10 @@
 ## binary-arb-completeness (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
 
-## binary-arb-completeness (intermediate) — 2026-04-11
+## binary-arb-completeness (intermediate → sophisticated)
+- **Status:** SUPERSEDED by sophisticated prim. See sophisticated entry below.
+
+## binary-arb-completeness (intermediate) — 2026-04-11 [historical]
 - **Works when:** Binary-only market (neg_risk=False); `gross_gap ≥ 2 × fee_rate[category] × p × (1−p) + 0.005`; gap age < 90s at discovery; both sides have depth ≥ position_size; liquidity ≥ $10k; no voiding signal
 - **Fails when:** Gap stale >90s (bots absorbed or structural trap); partial fill on second leg (directional binary exposure); market voided after first leg fills; neg_risk multi-outcome market (N-leg atomicity); fee_rate miscalculated (category not fetched); lockup cost exceeds net edge on long-dated markets with thin gaps; competitor bot already priced parity
 - **Category min edges** (at p=0.50): geopolitics $0.005, sports $0.020, politics/finance $0.025, weather $0.030, crypto $0.041
@@ -140,6 +143,18 @@
 - **Evidence:** fee formula from docs.polymarket.com (verified cycle 6) + derived calculations; zero live trades
 - **Implementation gaps:** category field not fetched, gap timestamp not tracked, neg_risk not filtered, partial-fill recovery not implemented
 - **Last validated:** never (paper-trade scanner needed — 30-day minimum sample)
+
+## binary-arb-completeness (sophisticated) — 2026-04-11
+- **Works when:** Binary-only market (neg_risk=False); `gross_gap ≥ max(2×fee_rate[category]×p(1−p)+0.005, 0.24×T_days/365)`; gap age < 30s (tier-1) OR < 90s with depth verification (tier-2); min(depth_yes, depth_no) ≥ target_position / 0.90; no voiding signal; category NOT crypto 15-min (dynamic fee zone); combinatorial extension: exhaustive multi-market sets where ΣP < $0.995 and N ≤ 4 legs
+- **Fails when:** Gap age > 90s (structural trap or HFT bait); partial fill on second leg (78% failure rate in low-liquidity — pre-order depth ceiling mandatory); APY < 24% after lockup discount (3% gap on 90-day market = 12% APY — below threshold); market voided post-first-leg fill; neg_risk multi-outcome market; dynamic fee rate not fetched (crypto 15-min special rate); anti-prim saturation (rolling 30-day median gap age < 3s AND >80% close in <5s)
+- **Gap age tier breakdown:** 0–30s = tier-1 (execute immediately); 30–90s = tier-2 (verify depth ≥ 3× position; structural illiquidity or HFT avoidance signal); >90s = reject unconditionally
+- **APY gates:** 7-day market: lockup floor 0.46% (fee floor dominates); 30-day: lockup floor 1.97% (binding for geopolitics 0% fee); 60-day: 3.95% (all categories binding); 90-day: 5.92% (near anti-prim threshold)
+- **Best markets:** Geopolitics (0% fee) binary markets with 7–30 day resolution; combinatorial multi-candidate election/tournament markets with N ≤ 4 exhaustive outcomes
+- **Best timeframe:** Real-time WebSocket; tier-1 < 30s; tier-2 depth-verify within 30–90s window; N-leg combinatorial requires parallel order submission infrastructure
+- **Key numbers:** Median gap age 2026: 2.7s (from 12.3s 2024); 73% profits by <100ms bots; $40M extracted Apr2024–Apr2025; top arb $2.01M at $496/trade avg; partial fill failure 78% (low-liquidity); required APY 24%; anti-prim trigger: median gap age < 3s AND >80% close in <5s
+- **Evidence:** arxiv 2508.03474 (IMDEA AFT 2025) + Finance Magnates/ILLUMINATION 2026 + navnoorbawa.substack + tokenmetrics + tradetheoutcome + Finance Magnates dynamic fees; zero own-data live trades
+- **Implementation gaps (9):** category fee not fetched dynamically, gap timestamp not tracked, neg_risk not filtered, leg ordering not depth-optimized, APY-gated lockup floor not computed, pre-order depth ceiling missing, partial fill loss accounting missing, combinatorial arb detector missing, anti-prim circuit-breaker scanner missing
+- **Last validated:** never (30-day gap age scanner needed before any tier-2 claim is testable)
 
 ## spread-capture-market-making (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
