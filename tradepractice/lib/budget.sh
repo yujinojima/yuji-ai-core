@@ -10,8 +10,10 @@ COST_MODEL_FILE="$STATE_DIR/cost-model.json"
 # 5-hour session window in seconds
 WINDOW_SECONDS=$((5 * 3600))
 
-# Session budget in USD (Max 20x: ~$8 per window is safe)
-SESSION_BUDGET_USD="${SESSION_BUDGET_USD:-8.00}"
+# Session budget in USD
+# Calibration: Max 20x 5-hour window allows ~$38 before hitting limits
+# We use $30 as tracked budget (safety margin) with 70% stop threshold = $21 spendable
+SESSION_BUDGET_USD="${SESSION_BUDGET_USD:-30.00}"
 
 # Stop threshold: stop when we've used this much of the budget
 STOP_THRESHOLD="${STOP_THRESHOLD:-70}"  # percent
