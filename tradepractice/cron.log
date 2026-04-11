@@ -441,3 +441,59 @@
   Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
 
 [2026-04-12 03:10:01] SKIP: tradepractice actively running
+[2026-04-12 04:10:01] LAUNCH: starting smart tradepractice (window 04:10)
+╔══════════════════════════════════════════════╗
+║     SMART TRADEPRACTICE                       ║
+║     Budget-aware, adaptive cycles             ║
+╚══════════════════════════════════════════════╝
+
+  Budget: $20.21 / $30.00 (67%)
+  Stop at: 70%
+  Cycles this window: 18
+  Window resets in: 180 min
+
+  Cost model (from recent runs):
+    opus_analyst: ~$2.84 (6 samples)
+    sonnet_analyst: ~$1.53 (49 samples)
+    sonnet_implementer: ~$0.70 (55 samples)
+
+  Will run cycles until budget reaches 70%
+  Current: 67%
+  Decision: stop
+
+╔══════════════════════════════════════════════╗
+║  SMART LOOP LAUNCHED                         ║
+╚══════════════════════════════════════════════╝
+
+  View:    tmux attach -t tradepractice
+  Stop:    ./stop.sh
+  Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
+
+[2026-04-12 05:10:02] LAUNCH: starting smart tradepractice (window 05:10)
+╔══════════════════════════════════════════════╗
+║     SMART TRADEPRACTICE                       ║
+║     Budget-aware, adaptive cycles             ║
+╚══════════════════════════════════════════════╝
+
+  Budget: $0.00 / $30.00 (0%)
+  Stop at: 70%
+  Cycles this window: 0
+  Window resets in: 300 min
+
+  Cost model (from recent runs):
+    opus_analyst: ~$2.84 (6 samples)
+    sonnet_analyst: ~$1.53 (49 samples)
+    sonnet_implementer: ~$0.70 (55 samples)
+
+  Will run cycles until budget reaches 70%
+  Current: 0%
+  Decision: run opus
+
+╔══════════════════════════════════════════════╗
+║  SMART LOOP LAUNCHED                         ║
+╚══════════════════════════════════════════════╝
+
+  View:    tmux attach -t tradepractice
+  Stop:    ./stop.sh
+  Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
+
