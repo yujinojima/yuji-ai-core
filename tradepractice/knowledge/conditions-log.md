@@ -356,6 +356,9 @@ Sources:
 ## obi-informed-directional (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
 
+## obi-informed-directional (intermediate → sophisticated)
+- **Status:** SUPERSEDED by sophisticated prim. See sophisticated entry below.
+
 ## obi-informed-directional (naive) — 2026-04-11 [historical]
 - **Works when:** IR = (V_bid−V_ask)/(V_bid+V_ask) > +0.65 (BUY YES) or < −0.65 (BUY NO); signal persists ≥ 3 consecutive snapshots; market liquidity $1k–$50k; price $0.20–$0.80; time-to-resolution > 2h; total depth ≥ $500 (thin-book guard); bid/ask each ≥ 3 orders
 - **Fails when:** wash-trading-inflated depth (20–60% of Polymarket volume is wash — IR unreliable without wash-adjusted depth); thin book (< $500 total depth; single order creates false IR); price near $0/$1; market already efficient (liquidity > $50k — bots absorb in <200ms); imminent resolution (< 2h)
@@ -371,4 +374,15 @@ Sources:
 - **Complementary state machine:** spread-capture-market-making sophisticated exits when |IR| ≥ 0.65; OBI directional activates — same CLOB depth feed, complementary regime routes
 - **Evidence:** 4 sources — arxiv 2603.03152 (OBI R², VR drift), Columbia SSRN 5714122 (wash rates), arxiv 2507.22712 (order lifetime filtration), Bawa Substack Dec 2025 (58% mid-liquidity claim)
 - **Implementation gaps:** (1) DepthSnapshot needs v_bid_aged/v_ask_aged from order-age tracking, (2) liquidity-tiered threshold selector, (3) Market.category field, (4) category exclusion gate, (5) category-specific hold horizon, (6) CLOB WebSocket order-age feed
-- **Last validated:** never (intermediate refinement; 58% WR is single-source hypothesis; filtration improvement predicted by arxiv 2507.22712 but not own-tested; anti-prim at own-data WR < 52% over 30 trades)
+- **Last validated:** never (intermediate refinement; 58% WR is single-source hypothesis; filtration improvement predicted by arxiv 2507.22712 but not own-tested; anti-prim at own-data WR < 52% over 30 trades) [historical — superseded by sophisticated]
+
+## obi-informed-directional (sophisticated) — 2026-04-11
+- **Works when:** Parent-order IR_clean sustained 30–50s above threshold (3 consecutive 10s snapshots mature; 5 snapshots thin); geopolitics (0% fee) or politics/finance (4% fee) category; price $0.20–$0.80; time-to-resolution > 2h; liquidity $2k–$50k; total aged depth ≥ $500; λ_proxy < 0.05 or 5-snapshot confirmation met; signal fires AFTER initial HFT burst (persistent-OBI target, not first-mover)
+- **Fails when:** Sports (45% wash + live-score adverse selection <5min — #1 exclusion); crypto (7.2% fee); liquidity > $50k (bots <200ms, no window); thin book < $2k (single order dominates IR); signal simultaneous with news onset (adverse selection); wash-dominated period (all resting orders < 5s = zero aged depth); first-mover OBI (consumed by <30ms bots before 10s snapshot); λ > 0.05 without 5-snapshot confirmation; resolution < 2h; no news-event cancel-on-move for 30–60min holds
+- **Best markets:** Geopolitics (0% fee, ~17–25% wash, lowest contamination) > politics/finance (4% fee, 50% rebate if maker, ~17–25% wash)
+- **Best timeframe:** 10s snapshot targeting persistent imbalance; hold 30–60min (geopolitics), 15–30min (politics)
+- **Key numbers:** 58% directional WR at IR>0.65 (Bawa, single source — hypothesis); OBI R²=0.65 (arxiv 2603.03152); VR(6)=1.84 persistent drift at political shocks; co-located bots 1–30ms; our 10s snapshot = lowest latency rank; sports wash 45% (peak 90%); geopolitics wash ~17% (conservative floor 25% post-Paradigm double-count); IR_clean > 0.70 mid-liquidity (raised from 0.65); breakeven 0% fee = 50%; breakeven 4% fee = 52%; EV at 58% WR / 0% fee = +0.16/unit; EV at 58% WR / 4% fee = +0.12/unit
+- **Competitive frame:** NOT competing with HFT for first-mover OBI (consumed in <30ms). Targeting residual persistent imbalance after HFT exits. Prediction market drift (VR=1.84) lasts minutes vs equity half-life of 5–30s — this is the structural justification for 10s snapshot targeting.
+- **Anti-prim triggers:** (A) own-data WR < 52% / 30 trades; (B) geopolitics wash ≥ 40%; (C) Polymarket extends taker delay removal to geopolitics/politics categories
+- **Evidence:** 8 sources — arxiv 2507.22712 (parent-order filtration), arxiv 2006.08682 (latency rank model), arxiv 2603.03152 (VR drift), Columbia SSRN 5714122 (wash rates), Paradigm Dec 2025 (double-count), arxiv 2603.03136 (Kyle λ), Bawa Substack (58% claim), QuantVPS 2026 (latency data)
+- **Last validated:** never (sophisticated tier — parent-order tracking BLOCKING for implementation; 7 implementation gaps; deployment blocked pending own-data validation; anti-prim at WR < 52% / 30 geopolitics trades)
