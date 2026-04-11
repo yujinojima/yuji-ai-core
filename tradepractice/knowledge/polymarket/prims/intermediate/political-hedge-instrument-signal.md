@@ -5,7 +5,7 @@ project: polymarket
 parent_prim: naive/political-hedge-instrument-signal
 created: 2026-04-12
 last_validated: never
-status: ACTIVE
+status: SUPERSEDED (by sophisticated/political-hedge-instrument-signal, cycle 67)
 ---
 
 ## Prim: political-hedge-instrument-signal
