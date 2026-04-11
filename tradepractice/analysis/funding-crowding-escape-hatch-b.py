@@ -42,7 +42,10 @@ OHLCV_DIR    = Path("/home/yuji/Desktop/Yuji Project/freqtrade/user_data/data/bi
 SYMBOLS = ["BTCUSDT", "ETHUSDT"]
 
 # Crowding filter thresholds (from sophisticated prim)
-FUNDING_THRESHOLD        = 0.0010   # 0.10% per 8h
+# Cycle 33 recalibration: 0.10% threshold never fired 2022-2026 (Binance post-2021
+# mechanics capped max at 0.088%). Recalibrated to 0.06% — midpoint of 0.05-0.07%
+# range that fired 26-91 raw spikes over 2022-2026 (5-10 and 18-year/yr respectively).
+FUNDING_THRESHOLD        = 0.0006   # 0.06% per 8h (recalibrated from 0.10%, cycle 33)
 OI_CHANGE_CROWDED_MAX    = 0.02     # < +2% OI change  → crowded gate active
 OI_CHANGE_PARABOLIC_MIN  = 0.05     # > +5% OI change  → bypass (parabolic)
 CONSECUTIVE_PERIODS      = 3        # 3+ consecutive 8h periods triggers

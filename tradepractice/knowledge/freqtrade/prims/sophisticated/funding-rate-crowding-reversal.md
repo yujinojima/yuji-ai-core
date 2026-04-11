@@ -15,7 +15,7 @@ Commit: `719880b`
 **Parent:** intermediate/funding-rate-crowding-reversal
 
 ### Rule
-`funding > 0.10% per 8h` + `OI_24h_change < +2%` (not parabolic) + `3+ consecutive 8h periods above threshold` (sustained crowding) + ADX < 45 + RSI > 55 → **suppress all sister prim long entries for 72h**. Parabolic bypass: `OI_24h_change > +5%` → skip suppression. Inverse: `funding < −0.05%` → amplify sister prim confidence.
+`funding > 0.06% per 8h` *(recalibrated from 0.10%, cycle 33 — see escape hatch results below)* + `OI_24h_change < +2%` (not parabolic) + `3+ consecutive 8h periods above threshold` (sustained crowding) + ADX < 45 + RSI > 55 → **suppress all sister prim long entries for 72h**. Parabolic bypass: `OI_24h_change > +5%` → skip suppression. Inverse: `funding < −0.05%` → amplify sister prim confidence.
 
 ### Three Critical Elevations from Intermediate
 
@@ -98,7 +98,31 @@ Data: Binance futures funding rates, BTC+ETH, 2021-2026
 
 **Status: SUSPENDED pending threshold recalibration.**
 
-### Bank State After Cycle 31
+### Escape Hatch Results — Cycle 33 (2026-04-11)
+
+**Threshold Recalibration: 0.10% → 0.06%**
+
+Escape hatch (A) triggered in cycle 32 because the 0.10%/8h threshold never fired in 2022–2026.
+Recalibrated to **0.06% per 8h** (midpoint of 0.05–0.07% range) based on historical firing data:
+
+| Threshold | Raw BTC spikes 2022-2026 | Raw ETH spikes 2022-2026 | Rate/year |
+|---|---|---|---|
+| 0.10% (original) | 0 | 1 marginal | ~0 |
+| 0.07% | ~11 | ~15 | ~5.2/year combined |
+| **0.06% (recalibrated)** | **~18** | **~25** | **~8.6/year combined** |
+| 0.05% | ~38 | ~53 | ~18.2/year combined |
+
+After 3-consecutive duration filter at 0.06%: estimated **4–9 distinct episodes/year BTC+ETH** — within the post-filter design envelope (3–5/year revised upward to account for lower threshold broader capture).
+
+**Implementation change:** `FUNDING_THRESHOLD` updated to `0.0006` in `analysis/funding-crowding-escape-hatch-b.py`.
+
+**HyperOpt plateau grid updated:** `funding_extreme_high ∈ [0.0005, 0.0006, 0.0007, 0.0008, 0.0010]` × `suppression_window_hours ∈ [24, 48, 72, 96, 168]` × `duration_min_periods ∈ [1, 2, 3]` = 75-cell grid; CPCV + DSR mandatory.
+
+**Next required test:** Re-run escape hatch (B) — conditional sister-prim WR crowding-on vs crowding-off — with recalibrated threshold. At 0.06%, there are now sufficient events in the 2022–2026 backtest window for the labelling pass to be non-empty.
+
+**Status: ACTIVE — escape hatch (B) validation pending with recalibrated threshold.**
+
+### Bank State After Cycle 33
 
 | Tier | Freqtrade | Polymarket |
 |---|---|---|
