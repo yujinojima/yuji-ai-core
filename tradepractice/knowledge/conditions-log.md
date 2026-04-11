@@ -152,6 +152,22 @@
 - **Key numbers:** Naive WR 67.2% (n=427); cycle 54 WR 28.6% (n=21, FAIL); re-backtest target n ≥ 100, WR ≥ 55%, Sharpe ≥ 0.70; OOS degradation 25–50% (McLean-Pontiff); 36-cell plateau grid → CPCV + DSR mandatory
 - **Last validated:** cycle 54 intermediate FAIL (WR 28.6%, n=21); cycle 63 revised rule (loosened filters + stoploss fix applied to strategy); re-backtest pending (cycle 64)
 
+## fair-value-gap-price-discovery (naive → intermediate)
+- **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
+
+## fair-value-gap-price-discovery (intermediate) — 2026-04-12 (cycle 65)
+- **Works when:** Formation volume ≥ 1.5× SMA(20) on FVG bar (institutional imbalance event; Stoll 1978); gap size 0.3–2.5% (temporary component range; Hasbrouck 1991 — below 2.5% = inventory-driven, above = news/permanent); single FVG in zone (< 2 FVGs within ±2% of current zone in prior 30 bars; stacking = persistent flow not temporary imbalance); FVG age ≤ 15 bars; **next-candle body enters gap zone** (body confirmation; avoids wick-only touch); ADX < 40 (non-parabolic regime); 4h EMA200 slope positive (HTF bullish structure); BTC/USDT or ETH/USDT (institutional order flow active); 4h timeframe
+- **Fails when:** ADX > 40 (parabolic or news-driven; permanent price impact component dominates — no fill buyers); stacked FVGs (≥ 2 in ±2% zone × 30 bars — persistent institutional selling/buying pressure, not temporary imbalance); gap > 2.5% (exhaustion or structural news gap; Hasbrouck 1991 permanent component, no reversion); formation volume < 1.5× SMA(20) (thin book gap — no institutional inventory imbalance created; no dealer rebalancing pressure); HTF bearish (4h EMA200 declining — no buy programs at equilibrium); same-candle entry (−5–10pp WR vs next-candle body confirmation; sister prim meta-analysis)
+- **Best pair(s):** BTC/USDT, ETH/USDT (untested; institutional order flow most plausible on liquid pairs)
+- **Best timeframe:** 4h (untested; fewer noise gaps than 1h; Hendershott & Menkveld intraday reversion is session-scale)
+- **Evidence:** 3 academic market microstructure anchors — Stoll (1978 JF), Hasbrouck (1991 JF), Hendershott & Menkveld (2014 JFE); equity baseline fill rates 67–80%; crypto fill rate unknown (no peer-reviewed crypto study exists as of 2026)
+- **Academic mechanism chain:** Stoll (1978) — institutional order flow creates dealer inventory imbalance → dealer rebalances by adjusting quotes toward FVG zone → gravitational pull. Hasbrouck (1991) — size bounds distinguish temporary (fillable, 0.3–2.5%) from permanent (unfillable, >2.5%) price moves. Hendershott & Menkveld (2014) — 67% of intraday price pressures revert within session → equity fill rate baseline; crypto target: 52–58% WR (−15–20pp discount for 24/7 structure, higher volatility, fewer institutional MMs).
+- **Key numbers:** Equity common gap fill 70–80% (Edwards & Magee); equity price pressure reversion 67% (Hendershott & Menkveld 2014); crypto 4h FVG community estimate 55–65% (LuxAlgo, selection-biased); intermediate crypto WR target 52–58%; live post-OOS ceiling 48–52%. Signal frequency: unknown — frequency scan required.
+- **Plateau grid:** 20-cell subgrid for initial backtest: `fvg_min_size ∈ [0.003, 0.005, 0.008, 0.010, 0.015]` × `fvg_max_age ∈ [5, 10, 15, 20]` (hold `fvg_vol_mult=1.5` fixed); expand to 80-cell full grid at sophisticated tier (requires CPCV + DSR).
+- **Anti-prim gates:** (A) n < 30 signals total across BTC/ETH 4h 2022–2025 at any `fvg_min_size × fvg_max_age` cell → frequency anti-prim (statistical floor; mechanism untestable); (B) no cell achieves WR > 50% in plateau → mechanism absent in crypto; (C) live WR < 45% after 30 trades → retire.
+- **Implementation gaps:** (1) `YujiFVGStrategy.py` not yet built; (2) frequency scan across 20-cell grid required before committing to full backtest; (3) stacked FVG filter is rolling-count approximation (±2% zone overlap check needed for sophisticated tier); (4) `fvg_vol_mult` plateau [1.2, 1.5, 2.0, 2.5] deferred to sophisticated tier; (5) CVD directional filter proposed as optional upgrade at sophisticated tier
+- **Last validated:** never (cycle 59 naive prim — first price imbalance axis; cycle 65 intermediate elevation — academic mechanism anchors established, conditions refined; frequency scan + own-data backtest pending)
+
 ---
 
 ## Polymarket Conditions
