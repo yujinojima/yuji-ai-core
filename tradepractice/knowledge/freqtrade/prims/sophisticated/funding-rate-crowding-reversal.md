@@ -122,6 +122,36 @@ After 3-consecutive duration filter at 0.06%: estimated **4–9 distinct episode
 
 **Status: ACTIVE — escape hatch (B) validation pending with recalibrated threshold.**
 
+### Escape Hatch Results — Cycle 38 (2026-04-11)
+
+**Escape Hatch (B): Conditional Sister-Prim WR Test at 0.06% — INCONCLUSIVE (Structural)**
+
+Tool: `analysis/funding-crowding-escape-hatch-b.py`
+Backtest zip: `backtest-result-2026-04-11_07-42-08.zip` (YujiRegimeStrategy, 178 trades, WR=45.5%, 2022–2025)
+Funding data: Binance BTCUSDT + ETHUSDT, 4,685 records each (2022-01-01 → 2026-04-11)
+OI gate: Volume proxy (4h OHLCV vol_24h_change) — actual OI API limited to 30-day lookback
+
+| Symbol | Raw spikes > 0.06% | Max consecutive (raw) | Max consecutive (after OI gate) | Episodes triggered |
+|---|---|---|---|---|
+| BTC | 15 | 2 | 2 | 0 |
+| ETH | 15 | 3 | 2 | 0 |
+
+**Root cause — OI gate parabolic bypass:**
+
+ETH had 3 consecutive raw funding spikes on two occasions:
+- 2024-02-29 00:00/08:00/16:00: The 00:00 candle (0.0626%) has vol_24h_change = +29.3% → parabolic bypass triggered → that candle excluded → only 2 consecutive pass the full filter
+- 2024-03-11 08:00/16:00, 03-12 00:00: The 08:00 candle (0.0672%) has vol_24h_change = +50.7% → parabolic bypass triggered → only 2 consecutive pass the full filter
+
+**Interpretation:** Every elevated-funding period in 2022–2026 was preceded or accompanied by elevated volume, triggering the parabolic bypass (vol_24h_change > 5%). The OI gate either:
+- **(Optimistic)** Correctly identifies all 2022–2026 funding spikes as parabolic (genuine bull market momentum, not trapped longs) — prim working correctly, zero crowding events in this regime
+- **(Pessimistic)** Volume proxy over-fires the parabolic gate — volume rising ≠ OI rising; the proxy conflates momentum candles with parabolic new-position-absorption
+
+**Structural implication:** Cannot resolve optimistic vs pessimistic interpretation without actual historical OI data. CoinGlass API provides OI history but requires subscription; Binance openInterestHist limited to 30 days. Until real OI data is sourced, the volume proxy cannot be trusted for the OI gate, and the escape hatch (B) test cannot be executed validly.
+
+**Anti-prim (C) signal:** The parabolic bypass firing on 100% of the funding episodes that reach 2 consecutive periods is consistent with anti-prim (C) threshold: > 50% of extreme funding events pass OI bypass → structural anti-prim. This is not yet confirmed (sample N too small; bypass rate could be measurement artifact).
+
+**Status: ACTIVE — escape hatch (B) INCONCLUSIVE pending actual OI data. Parabolic contamination (anti-prim C) flagged for monitoring.**
+
 ### Bank State After Cycle 33
 
 | Tier | Freqtrade | Polymarket |
@@ -139,6 +169,6 @@ After 3-consecutive duration filter at 0.06%: estimated **4–9 distinct episode
 - Commit: `719880b`
 
 ### Next Cycle Recommendation
-**(A) IMPLEMENT** — anti-prim escape hatch (B) is uniquely tractable: conditional sister-prim WR test requires only (i) historical funding+OI data download, (ii) retroactive filter applied to existing sister prim backtest signals. Cheapest test in the bank; validates or retires the prim without new forward data.
-**(B) BACKTEST-ANALYSIS** — divergence head-to-head (bullish-rsi-divergence vs hidden-bullish-rsi-divergence) remains highest-value own-data test; all 4 outcomes load-bearing.
-**(C) ASSESS** — cross-venue-semantic-arb is sole remaining naive polymarket prim; intermediate requires semantic classifier pipeline and viable gap-size distribution above 5.7% friction floor.
+**(A) IMPLEMENT** — source actual OI history data (CoinGlass subscription or alternative) for 2022–2026 BTC+ETH; re-run escape hatch (B) with real OI replacing volume proxy. Volume proxy over-fires the parabolic bypass gate, making the conditional WR test unexecutable. Without actual OI, the prim cannot be validated or retired.
+**(B) BACKTEST-ANALYSIS** — divergence head-to-head (bullish-rsi-divergence vs hidden-bullish-rsi-divergence); 28-cell plateau test. Escape hatch (B) precursor strong (cycle 37: hidden WR 30% vs regular-div WR 62.5% at n=10).
+**(C) IMPLEMENT** — fomc_pm_mapper.py classifier for polymarket financial-market-lead-lag prim (single BLOCKING dependency).
