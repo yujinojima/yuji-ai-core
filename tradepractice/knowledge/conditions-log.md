@@ -324,3 +324,13 @@ Sources:
 - **Evidence:** Strategy code extraction (YujiExtinctionBurstStrategy.py); Wyckoff Selling Climax (1931, equity/futures — foundational concept, no crypto quantification); ABA extinction burst (behavioral psychology — mechanistic framework, not finance literature); PMC9920669 (CANNOT directly apply — tests RSI < 30, not RSI < 20 multi-factor)
 - **Implementation note:** YujiExtinctionBurstStrategy.py uses three entry tiers — `extinction_burst_full` (most restrictive), `extinction_burst_partial` (lower wick > 50% substitutes for MFI), `macro_capitulation` (4h RSI < 25 + 1h RSI < 25 + volume 2×). Strategy has StoplossGuard (2 stops per 24h window → conservative frequency assumption confirmed by designer) and MaxDrawdown protection (12% DD over 48h = treats this as high-conviction rare-event strategy).
 - **Last validated:** never (NEW naive extraction from YujiExtinctionBurstStrategy.py; no backtest; frequency and WR on target pairs entirely unknown)
+
+## obi-informed-directional (naive) — 2026-04-11
+- **Works when:** IR = (V_bid−V_ask)/(V_bid+V_ask) > +0.65 (BUY YES) or < −0.65 (BUY NO); signal persists ≥ 3 consecutive snapshots; market liquidity $1k–$50k; price $0.20–$0.80; time-to-resolution > 2h; total depth ≥ $500 (thin-book guard); bid/ask each ≥ 3 orders
+- **Fails when:** wash-trading-inflated depth (20–60% of Polymarket volume is wash — IR unreliable without wash-adjusted depth); thin book (< $500 total depth; single order creates false IR); price near $0/$1 (structural imbalance, not informational); market already efficient (liquidity > $50k — bots absorb imbalance in <200ms, no actionable window); imminent resolution (< 2h — IR volatility extreme, mechanism undefined)
+- **Best pair(s):** Politics/finance, geopolitics markets (0–4% taker fee → most margin before breakeven)
+- **Best timeframe:** real-time WebSocket; signal window 30s–5min
+- **Key numbers:** 58% directional accuracy at IR > 0.65 (Bawa, arxiv 2603.03152); OBI R² = 0.65 for short-interval variance prediction; wash trading 20–60% of volume (Columbia Nov 2025)
+- **Complementary relationship with spread-capture-market-making sophisticated:** MM prim has gate `|IR| < 0.65` — when IR breaches 0.65, MM exits and OBI directional activates. The two prims are complementary state-machine routes on the same order book data feed
+- **Evidence:** single academic source (Bawa, arxiv 2603.03152); zero own-data backtest
+- **Last validated:** never (NEW naive prim; no implementation yet; 58% accuracy claim requires independent replication before elevation to intermediate)

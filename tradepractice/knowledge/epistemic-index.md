@@ -142,7 +142,8 @@ Over time, evaluate: which reactions lead to reliable outcomes under specific co
 | Name | Rule | Certainty | Reaction Validated | File |
 |------|------|-----------|-------------------|------|
 | [binary-arb-completeness](polymarket/prims/naive/binary-arb-completeness.md) | ~~YES+NO < $0.995 → buy both sides for risk-free profit if both fill~~ — **SUPERSEDED** by intermediate | hypothesis | assumed | src/strategies/arb.py |
-| [spread-capture-market-making](polymarket/prims/naive/spread-capture-market-making.md) | Spread $0.03–$0.15 + liquidity >= $5k → place inside-spread limit orders on both sides to capture spread | guess | assumed | src/strategies/spread.py |
+| [spread-capture-market-making](polymarket/prims/naive/spread-capture-market-making.md) | ~~Spread $0.03–$0.15 + liquidity >= $5k → place inside-spread limit orders on both sides to capture spread~~ — **SUPERSEDED** by intermediate | guess | assumed | src/strategies/spread.py |
+| [obi-informed-directional](polymarket/prims/naive/obi-informed-directional.md) | IR = (V_bid−V_ask)/(V_bid+V_ask) > +0.65 → BUY YES; IR < −0.65 → BUY NO. Hold until IR < 0.30 or 30min. **5th prim: pure CLOB microstructure directional. Complementary to spread-capture (activates when MM exits). 58% accuracy at IR>0.65 (Bawa, arxiv 2603.03152). No own-data backtest. Wash-trading contamination is #1 risk (20–60% of Polymarket volume). No implementation.** | hypothesis | untested | new: src/strategies/obi_directional.py |
 | [ensemble-forecast-edge](polymarket/prims/naive/ensemble-forecast-edge.md) | ~~GFS ensemble prob - market price >= 8% → buy the mispriced bracket, sized via fractional Kelly~~ — **SUPERSEDED** by intermediate | guess | assumed | src/weather/strategy.py |
 | [fractional-kelly-sizing](polymarket/prims/naive/fractional-kelly-sizing.md) | ~~Size = 15% of full Kelly × bankroll, capped at min(5% bankroll, $100)~~ — **SUPERSEDED** by intermediate | hypothesis | assumed | src/weather/strategy.py |
 
