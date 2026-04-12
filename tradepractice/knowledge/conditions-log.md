@@ -1060,4 +1060,15 @@ Sources:
 - **Evidence:** zero own-data. 9 academic anchors (6 from naive + Atanasov et al. 2016 Management Science, Budescu & Chen 2015 Management Science, Cowgill & Zitzewitz 2015 ReStat)
 - **Last validated:** never (RESEARCH elevation — cycle 96; H_G Granger test protocol formalized but not executed)
 - **Blocking for sophisticated:** G1 H_G test (N≥50 Mode A, N≥30 Mode B); G2 semantic matcher validation (precision ≥ 0.85 at N=50 labeled pairs); G3 IS backtest (WR ≥ 55% or median gap closure ≥ 6 pp per mode)
+
+## wallet-reputation-directional (naive) — 2026-04-12 [cycle 97]
+- **Works when:** ≥ 2 top-50 lifetime-PnL wallets (min ≥ 50 resolved trades, ≥ $10k gross PnL) independently entered same direction (YES or NO) on same PM market within past 48h; PM YES price $0.10–$0.70; PM liquidity ≥ $5k; resolution horizon 7–90 days; both wallets in concentration are independent (not sybil-clustered)
+- **Fails when:** Sybil accounts (same trader operating multiple top-50 wallets — **#1 failure mode at naive tier**); category-style drift (top-50 accumulated PnL in elections but betting in crypto/sports); information already priced (top-wallet entry > 24h ago and PM has already converged); large-wallet own-market-impact (entry price reflects their own bet, not residual information); split signal (≥ 2 YES wallets AND ≥ 2 NO wallets in same 48h window → ambiguous → no trade)
+- **Best pair(s):** US political/electoral markets (highest overlap between PnL concentration and category-specific expertise)
+- **Entry direction:** same direction as concentration (YES if ≥ 2 top-50 entered YES; NO if ≥ 2 top-50 entered NO; abstain if split)
+- **Exit:** 72h max hold OR YES price ≥ $0.85 (long YES) OR YES price ≤ $0.15 (long NO)
+- **Evidence:** zero own-data. Primary empirical anchor: Della Vedova (SSRN 6191618, 2025) — 222M PM trades, top 10% wallets account for 90%+ of aggregate profits; persistent skill heterogeneity confirmed. Supporting: Cowgill & Zitzewitz (2015), Budescu & Chen (2015)
+- **Last validated:** never (NEW naive prim, cycle 97 — 19th polymarket signal class; on-chain wallet PnL reputation-weighted directional signal)
+- **Blocking for intermediate:** G1 H_W test: IS backtest N≥30 historical concentration events (≥ 2 top-50 wallets, same direction, 48h, WR ≥ 52%); G2 sybil cluster analysis (remove controlled wallet clusters, retest on clean sample); G3 category-segmentation validation (category-specific wallet quality ranking if WR varies > 10 pp by category)
+- **Prim bank after cycle 97:** 19 naive (18 superseded, 1 active: wallet-reputation-directional) / 18 intermediate (1 active: low-friction-venue-lead) / 17 sophisticated
 - **Prim bank after cycle 96:** 18 naive (18 superseded, 0 active) / 18 intermediate (2 active: perp-spot-basis-divergence + low-friction-venue-lead) / 17 sophisticated
