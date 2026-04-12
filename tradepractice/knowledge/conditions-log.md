@@ -1015,6 +1015,7 @@ Sources:
 - **Prim bank after cycle 90:** 11 naive / 16 intermediate / **17 sophisticated** (+1)
 
 ## perp-spot-basis-divergence (naive) — 2026-04-12 [cycle 92]
+**[SUPERSEDED by intermediate, cycle 94]**
 - **Works when:** Basis > +0.10% AND rising (4h_delta > +0.05pp); BTC/ETH perp only; 1h candles; no quarterly expiry window (Binance Q-end ± 3 days); distinct-from-funding application (early-cycle: basis elevated while funding still neutral) OR reinforcing application (basis + funding both elevated = double confirmation)
 - **Fails when:** Genuine institutional bull (basis sustained > 0.10% for weeks — genuine demand absorbing funding cost); 2025+ arbitrage compression (lead window compressed to < 1h → no temporal advantage over funding prim); quarterly expiry distortion; noise floor without delta gate; basis near zero in sideways market (signal never fires)
 - **Best pair(s):** BTC/USDT:USDT, ETH/USDT:USDT (Binance perpetual — largest liquidity, tightest mark-price tracking)
@@ -1022,4 +1023,15 @@ Sources:
 - **Evidence:** none own (NEW prim); mechanism peer-reviewed (Liu & Tsyvinski 2021 JF; Alexander & Heck 2020 JIF; Bian et al. 2022 JF)
 - **Last validated:** never (NEW naive prim, cycle 92 — 13th freqtrade mechanism axis; perp-spot basis as LEADING signal that generates the 8h funding rate as its lagged derivative)
 - **Blocking prerequisites:** (1) frequency scan: count activations at basis ∈ [0.05%, 0.08%, 0.10%, 0.15%, 0.20%] on BTC/ETH 2021–2025; (2) lead-time measurement vs funding prim events (median lead ≥ 2h required for independent value claim); (3) collapse signal validation (hypothesis only at cycle 92)
-- **Prim bank after cycle 92:** 12 naive (11 superseded + 1 active) / 16 intermediate / 17 sophisticated
+
+## perp-spot-basis-divergence (intermediate) — 2026-04-12 [cycle 94]
+- **Works when:** Four-tier structure. Tier A (pre-emptive early warning): basis ∈ [0.06%, 0.12%) AND delta_4h > 0.03pp AND funding ≤ 0.04% AND 2-candle persistence → suppress at 0.75 weight. **Tier A is the unique value-add**: when basis is elevated but funding not yet triggered, estimated ρ with funding prim ≈ 0.30 (near-independent). Tier B (confirmed crowding): basis ≥ 0.12% AND delta_4h > 0.03pp → full suppress (co-occurrence with funding prim treated as single event, ρ ≈ 0.85). Tier C (collapse restoration, H2): basis collapses from ≥ 0.08% → < 0.02% within 2 bars, prior suppression active (6-bar window), funding still elevated → restore entries at 1.15×. Tier D (inverse): basis < −0.10% AND delta_4h < −0.03pp → amplify 1.25×.
+- **Fails when:** ADX_1h > 35 AND EMA alignment ≥ 3 AND close > EMA200_4h (parabolic bypass — genuine institutional bull; longs absorbing carry cost willingly; same bypass as funding prim); quarterly expiry contamination (final 7 calendar days Mar/Jun/Sep/Dec); arbitrage compression (2025+: 4h lead window may have shrunk to < 1h); Tier A fires but H_L test rejected (lead time < 1 bar, basis concurrent with funding, no temporal advantage); basis oscillating near threshold with intermittent persistence (noise-floor false Tier A signals)
+- **Best pair(s):** BTC/USDT:USDT, ETH/USDT:USDT; Binance premiumIndex endpoint (NOT raw OHLC comparison)
+- **Best timeframe:** 1h (basis computed via informative_pairs spot+perp or bot_loop_start() premiumIndex); 4h context
+- **H_L hypothesis:** Tier A activation precedes `funding-rate-crowding-reversal` by median ≥ 2 bars in ≥ 60% of matched events. Test: cross-correlate Tier A timestamps with funding prim history on BTC 1h 2021–2025. Pass → Tier A valid independently. Fail → collapse Tier A into funding prim gate only.
+- **H2 hypothesis:** basis collapse (≥ 0.08% → < 0.02% within 2 bars) while funding still elevated → trapped shorts provide squeeze fuel after long liquidation wave; restore sister prim entries 1.15×. Untested.
+- **Evidence:** 5 academic anchors: Liu & Tsyvinski 2021 JF (basis predicts returns), Alexander & Heck 2020 JIF (basis = order flow imbalance), Bian et al. 2022 JF (basis = leverage flow), Brunnermeier & Pedersen 2009 RFS (funding-liquidity spiral; collapse timing), Makarov & Schoar 2020 JFE (crypto arb lag supports 4h lead claim)
+- **Blocking prerequisites for sophisticated:** G1 Binance klines frequency scan; G2 H_L test (median lead ≥ 2 bars in ≥ 60%); G3 IS backtest n ≥ 15 Tier A events; G4 ADX bypass validation in 2024 ETF bull
+- **Last validated:** never (intermediate elevation via RESEARCH, cycle 94; H_L and H2 unconfirmed; no own-data backtest)
+- **Prim bank after cycle 94:** 12 naive (12 superseded, 0 active) / 17 intermediate (1 active: perp-spot-basis-divergence) / 17 sophisticated
