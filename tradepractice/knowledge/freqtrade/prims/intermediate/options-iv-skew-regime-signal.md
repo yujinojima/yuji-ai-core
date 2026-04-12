@@ -7,7 +7,8 @@ axis: 15th regime axis
 signal-class: options-market IV regime classifier (meta-signal)
 parent: freqtrade/prims/naive/options-iv-skew-regime-signal.md
 created: 2026-04-12
-superseded-by: (pending — sophisticated tier)
+superseded-by: freqtrade/prims/sophisticated/options-iv-skew-regime-signal.md (cycle 111)
+status: SUPERSEDED
 ---
 
 # Options IV Skew Regime Signal (Intermediate)

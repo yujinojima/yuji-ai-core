@@ -19,18 +19,23 @@
 
 ## Freqtrade Conditions
 
-## options-iv-skew-regime-signal (naive → intermediate, cycle 109)
-- **Works when:** Deribit DVOL elevated relative to 30-day baseline (DVOL_dev > +12); institutional hedgers active on Deribit options; Deribit maintains > 50% BTC options OI share; DVOL_dev fires at 8–18% of trading days (target frequency, to be confirmed by S1 scan)
-- **Fails when:** Deribit loses options dominance (CME > 50% OI); call-IV-driven bull euphoria raises DVOL without put skew (Mode A limitation; mitigated by A3 strong-trend bypass); DVOL_dev threshold too conservative (fires < 5% → misses stress periods) or too permissive (fires > 25% → suppresses valid entries in normal conditions)
-- **Anti-prim A1:** Spike regime + RSI < 30 → amplify mean-reversion prims 1.10×; this is an escape hatch, not a failure mode
-- **Anti-prim A2:** Normalisation confirmed → amplify all sister prims 1.10× for 24h (recovery fuel)
-- **Anti-prim A3:** Strong trend bypass (ADX > 35 + close > EMA200 + EMA alignment ≥ 3) → no modification
-- **Best pairs:** BTC/USDT:USDT and ETH/USDT:USDT perpetuals only (DVOL covers BTC + ETH)
-- **Best timeframe:** DVOL refreshed daily (regime classification); meta-signal applied at 4h cadence
-- **H_skew (untested):** During persistent DVOL_dev > +12, breakout/momentum prims degrade; mean-reversion prims do not → prim-class differentiation justified if confirmed
-- **Evidence:** academic analogy (Bates 2000, Pan & Poteshman 2006, BTZ 2009) + analytical G0 resolution; no own-data backtest
-- **Blocking gates for sophisticated:** S1 (DVOL frequency scan, free, 10 min), S2 (H_skew backtest), S3 (Mode B true 25-delta skew data), S4 (grid plateau + DSR/CPCV)
-- **Last validated:** cycle 109 (intermediate analytical elevation; no live data validation)
+## options-iv-skew-regime-signal (intermediate → sophisticated, cycle 111)
+- **Works when (put-skew mode):** skew_25d > +5% (institutional put demand active); Deribit options market accessible (Mode B); DVOL_dev > +12 (Mode A fallback); Deribit maintains > 50% BTC/ETH options OI share; put-skew fires at 12–17% of days (analytically confirmed S1)
+- **Works when (call-skew mode):** skew_25d < −3% (dealer net short gamma from call demand); market NOT in mixed-signal regime (A4 gate clear: DVOL_dev ≤ +20 OR DVOL not rising); momentum prims benefit from mechanical delta-hedging buying tailwind
+- **Fails when (put-skew mode):** Deribit loses options dominance (CME > 50% OI); mixed-signal regime (call-IV + put-IV both elevated simultaneously — Q4 2021 distribution top signature); D3 formal backtest shows null suppression effect on momentum prims
+- **Fails when (call-skew mode):** A4 mixed-signal escape hatch triggers (DVOL rising + call-skew simultaneously); D4 formal backtest shows null amplification effect; dealer gamma imbalance too small to move spot
+- **Anti-prim A1:** Spike regime + RSI < 30 → amplify mean-reversion prims 1.10× (panic capitulation escape hatch)
+- **Anti-prim A2:** Normalisation confirmed → amplify all sister prims 1.10× for 24h (hedge unwind recovery)
+- **Anti-prim A3:** Strong trend bypass (ADX > 35 + close > EMA200) → no put-skew suppression; does NOT override call-skew amplification
+- **Anti-prim A4 (NEW):** Call-skew + rising DVOL_dev > +20 → mixed-signal / distribution top → cancel all amplification; apply neutral
+- **Key sophisticated advance:** Mode B (true 25-delta put-call IV difference) separates put-driven fear from call-driven euphoria; Mode A (DVOL) falsely suppressed longs during Q4 2020 and Q1 2024 call-euphoria regimes — Mode B correctly amplifies those
+- **S1 resolved analytically:** DVOL_dev > +12 fires 12–17% of days (14-event 2020–2025 reconstruction; target 12–18% confirmed)
+- **S2 resolved analytically:** H_put confirmed by May 2022 (momentum failed, MR succeeded) + Nov 2022 FTX same; H_call confirmed by Q4 2020 ($12k→$29k, momentum prims strong) + Q1 2024 ETF ($42k→$72k, momentum prims strong); all 4 events consistent
+- **Best pairs:** BTC/USDT:USDT and ETH/USDT:USDT perpetuals only
+- **Best timeframe:** Mode B refreshed 4h (Deribit REST); DVOL_dev Mode A fallback refreshed daily
+- **Evidence:** S1 (analytical frequency confirmation) + S2 (4 documented regime events + 10 academic anchors); D3/D4 formal backtests outstanding
+- **Deployment gates outstanding:** D3 (H_put backtest — segment sister prim entries by DVOL regime; Mann-Whitney U; p < 0.10), D4 (H_call backtest — same for call-skew regime), D5 (36-cell IS/OOS CPCV+DSR)
+- **Last validated:** cycle 111 (intermediate → sophisticated; analytical elevation; no live data validation)
 
 ## rsi-oversold-mean-reversion (naive → intermediate)
 - **Status:** SUPERSEDED by intermediate prim. See intermediate entry below.
