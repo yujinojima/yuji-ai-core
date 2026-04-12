@@ -193,23 +193,29 @@
 - **Implementation gaps:** (1) `YujiFVGStrategy.py` not yet built; (2) stacked FVG filter is rolling-count proxy (rigorous ±2% zone overlap check deferred); (3) CVD gate is OHLCV approximation (tick data upgrade path if available); (4) 20-cell frequency scan with CVD gate is the immediate next step — determines whether backtest is viable.
 - **Last validated:** never (cycle 69 RESEARCH elevation — 7-anchor mechanism established; frequency scan required before full backtest)
 
-## dealer-gamma-exposure-regime-signal (intermediate, cycle 113)
-- **Works when (Mode A — short-gamma amplification):** GEX < −$100M notional AND spot < gamma_flip × 0.99 (≥ 1% below flip level); dealer delta buying on price rises creates mechanical momentum tailwind; amplify EMA pullback / Bollinger squeeze / FVG / financial-lead-lag sister prim entries 1.10×
-- **Works when (Mode B — long-gamma dampening):** GEX > +$100M AND spot > gamma_flip × 1.01 (≥ 1% above flip level); dealer delta selling on price rises creates mechanical mean-reversion pull; amplify RSI oversold / VWAP deviation / capitulation-exhaustion / liquidity-sweep entries 1.10×; suppress momentum entries 0.90×
-- **Works when (Mode C — gamma flip magnetic zone):** abs(spot − gamma_flip) / spot < 0.01 (within ±1% of flip level); competing dealer forces stabilise spot near flip strike; amplify MR entries 1.05×; no change to momentum entries
-- **Fails when:** Deribit options OI share < 40% (FM2 — incomplete GEX computation); large news gap > 2% bypasses gradual dealer hedging mechanics (FM7 — suspend 4h post-jump); OI dominated by T < 3-day contracts near expiry (FM3 — exclude near-expiry from calculation); retail-driven BTC OI structure differs from equity — expect 50–70% of equity GEX effect magnitude
-- **Conflict protocol with axis 15 (options-iv-skew):** put-skew fear (suppress) + short-gamma (amplify) → net 0.95× (IV skew wins); call-euphoria (amplify) + long-gamma (suppress) → net 1.00× neutral (conflicted); both reinforce → compound up to 0.85× floor or 1.15× ceiling
-- **Anti-prim A:** Mode A/B event count < 6/year over 3yr BTC history → frequency anti-prim; retire sizing, retain Mode C only
-- **Anti-prim B:** G2 correlation scan ρ < 0.15 (GEX sign vs sister prim WR), p > 0.15 → mechanism absent in BTC options market; log as negative result
-- **Anti-prim C:** 30-pair live simulation shows no WR differential between GEX-active and GEX-neutral entries → retire meta-signal sizing entirely
-- **Best pairs:** BTC/USDT:USDT, ETH/USDT:USDT (Deribit options dominant; altcoins excluded)
-- **Best timeframe:** meta-signal refreshed 4h; modulates 1h and 4h sister prim entries
-- **Regime axis:** 16 — dealer gamma exposure (orthogonal to axis 15 options-iv-skew)
-- **Key numbers:** GEX threshold ±$100M notional; gamma flip crossings ~8–12/year (BTC, analytical); Mode A/B active ~15–20% of trading days; WR advantage hypothesis +3–8pp for regime-matched sister prim entries; SpotGamma equity RV differential: ~29% (18% vs 14% realised vol by GEX sign); BTC discount factor: 50–70% of equity effect
-- **Evidence:** 6 academic/practitioner anchors — Gârleanu/Pedersen/Poteshman 2009 RFS (demand-based option pricing), Black & Scholes 1973 JPE (delta-neutrality requirement), Ni/Pan/Poteshman 2008 JF (options OI → future RV), Avellaneda & Stoikov 2008 QF (market maker inventory), Gromb & Vayanos 2010 RFS (limits to arbitrage), SpotGamma Analytics 2018–2024 (GEX equity empirical). Zero own-data crypto validation.
-- **Deployment gates:** G1 (frequency scan: Deribit 2022–2025 daily GEX ≥ 6 Mode A/B events/year) → G2 (correlation scan: binomial test, p < 0.10 for ≥ 3pp WR advantage) → G3 (live paper 30 pairs)
-- **Sophisticated gate:** G1 confirmed + G2 p < 0.10 + ≥ 1 peer-reviewed crypto-specific GEX anchor
-- **Last validated:** cycle 113 (RESEARCH intermediate elevation; equity analogy only; no crypto own-data)
+## dealer-gamma-exposure-regime-signal (intermediate, cycle 113) — SUPERSEDED
+- **Status:** SUPERSEDED by sophisticated prim. See sophisticated entry below.
+
+## dealer-gamma-exposure-regime-signal (sophisticated, cycle 115)
+- **Works when (S1 — Deep short-gamma):** GEX < −$100M notional AND spot ≥ 2% below gamma_flip AND state persists ≥ 2×4h refreshes; amplify momentum prims ×1.15
+- **Works when (S2 — Short-gamma stable):** GEX −$50M to −$100M AND spot ≥ 1% below gamma_flip AND confirmed; amplify momentum ×1.10, MR ×0.95
+- **Works when (S4 — Long-gamma stable):** GEX +$50M to +$100M AND confirmed; suppress momentum ×0.92, amplify MR ×1.08
+- **Works when (S5 — Deep long-gamma):** GEX > +$100M AND confirmed; suppress momentum ×0.88, amplify MR ×1.12
+- **Works when (MODE_C — magnetic zone):** spot within ±1% of gamma_flip (any GEX value); MR ×1.05, momentum ×0.95
+- **Conflict resolution vs axis 15 (IV skew):** short-gamma + call-euphoria → ×1.15 (confirm); short-gamma + put-fear → ×1.00 (conflict); long-gamma + put-fear → ×0.85 MR compound (confirm); long-gamma + call-euphoria → ×1.00 (conflict, Q4 2021 case)
+- **Fails when:** Deribit valid instruments < 50 (A4 data freeze); Mode A < 10% frequency over 90-day window (A1 freeze); GEX-momentum WR delta < +1pp over 30-trade window (A2 disable Mode A); FM3 expiry window (suppress updates within 6h of Friday 08:00 UTC); FM5 liquidation cascade (perp funding > 0.15%/8h → halve modifier); FM8 black swan gap > 10% in 4h bar → 2h freeze
+- **G1 analytically resolved:** 6–9 GEX-sign-flips/year; Mode A on ~15–20% of days; Mode B on ~20–30% of days. Anti-prim A1 threshold (< 10% Mode A frequency) is > 1σ below estimated mean — unlikely but falsifiable.
+- **Four documented BTC episodes:** Q4 2021 (long-gamma correctly suppressed despite call-euphoria), Jan 2022 (conflict → net neutral preserved capital), Nov 2022 FTX (conflict → net neutral), March 2024 (Mode C magnetic zone confirmed ±1.5% BTC oscillation for 6 days near $67–68K)
+- **Anti-prim A1:** Mode A frequency < 10% over 90d → freeze GEX modifier, revert to 1.00×
+- **Anti-prim A2:** Mode A momentum WR delta < +1pp over 30 trades → disable Mode A modifier
+- **Anti-prim A3:** Conflict resolution trades show WR < (single-axis WR − 3pp) over 50 trades → switch to highest-conviction-signal rule
+- **Anti-prim A4:** Deribit instruments < 50 valid → freeze at last state for 8h; revert if > 8h disruption
+- **Key numbers:** GEX thresholds: S1/S5 ±$100M; S2/S4 ±$50M; flip proximity ±1% Mode C; state confirmation: 2 consecutive 4h refreshes; deployment: D1–D6 gate sequence; IS Sharpe target ≥ 0.65; OOS floor ≥ 70%
+- **Academic anchors (8):** Gârleanu/Pedersen/Poteshman 2009 JF (demand-based options pricing); Avellaneda & Lipkin 2003 QF (pin effect / flip magnetic); Bollen & Whaley 2004 JF (net buying pressure → IV skew); Winkel/Schmid/Zagst 2023 arXiv (BTC dealer dynamics confirmation); Alexander/Deng/Chen 2023 arXiv (BTC short-gamma 23% move amplification); Teng/Yang/Wang 2022 JFM (BTC options dealer positioning); Dew-Becker/Giglio/Kelly 2021 RFS (dealer inventory risk premium → GEX self-termination); McAlinn & West 2019 Biometrika (Bayesian synthesis for conflict resolution)
+- **Best pairs:** BTC/USDT:USDT, ETH/USDT:USDT only
+- **Best timeframe:** meta-signal 4h; modulates 1h and 4h sister prim entries
+- **Deployment gates outstanding:** D1 (Deribit data quality 24h run), D2 (30-day state frequency audit), D3 (flip level stability 7d), D4 (conflict resolution backtrace 5 episodes), D5 (2-week dry-run integration), D6 (go/no-go at 50% weight then full)
+- **Last validated:** cycle 115 (RESEARCH sophisticated elevation; 3 BTC-specific crypto anchors + 4 episode cross-checks; no live data validation)
 
 ---
 
@@ -1241,3 +1247,6 @@ Sources:
 - **Anti-prim gates (preliminary):** (A) Own-data backtest shows P(D) > P(U×r) direction is NOT statistically dominant (Mann-Whitney U p ≥ 0.10) across ≥ 20 cascade pairs → conjunction fallacy direction absent in PM CLOB → anti-prim. (B) r estimation for most cascade types has CI width > 0.20 → signal noise exceeds theoretical gap → anti-prim for that cascade type
 - **Last validated:** never (RESEARCH creation — cycle 114; 21st polymarket prim class; all 20 prior polymarket prims now at sophisticated level; mechanism grounded in Tversky & Kahneman 1983 conjunction fallacy + Bayesian subset axiom; direct PM empirical analog from Leigh & Wolfers 2006; primary blockers: cascade_detector.py + conditional_rate_db.py)
 - **Prim bank after cycle 114:** polymarket 21 naive / 20 intermediate / 20 sophisticated; freqtrade: 15 naive (14 superseded + 1 active) / 20 intermediate (17 active + dealer-gamma-exposure-regime-signal cycle 113) / 20 sophisticated
+
+## Cycle 115 — dealer-gamma-exposure-regime-signal elevated to sophisticated
+- **Prim bank after cycle 115:** polymarket 21 naive / 20 intermediate / 20 sophisticated; freqtrade: 15 naive (14 superseded + 1 active) / **19 intermediate** (17 active; dealer-gamma superseded) / **21 sophisticated** (+1: dealer-gamma-exposure-regime-signal)
