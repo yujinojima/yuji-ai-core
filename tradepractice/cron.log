@@ -668,3 +668,60 @@
   Stop:    ./stop.sh
   Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
 
+[2026-04-12 15:10:01] SKIP: tradepractice actively running
+[2026-04-12 16:10:01] LAUNCH: starting smart tradepractice (window 16:10)
+╔══════════════════════════════════════════════╗
+║     SMART TRADEPRACTICE                       ║
+║     Budget-aware, adaptive cycles             ║
+╚══════════════════════════════════════════════╝
+
+  Budget: $19.81 / $30.00 (66%)
+  Stop at: 70%
+  Cycles this window: 18
+  Window resets in: 180 min
+
+  Cost model (from recent runs):
+    opus_analyst: ~$2.84 (6 samples)
+    sonnet_analyst: ~$1.80 (84 samples)
+    sonnet_implementer: ~$0.36 (90 samples)
+
+  Will run cycles until budget reaches 70%
+  Current: 66%
+  Decision: stop
+
+╔══════════════════════════════════════════════╗
+║  SMART LOOP LAUNCHED                         ║
+╚══════════════════════════════════════════════╝
+
+  View:    tmux attach -t tradepractice
+  Stop:    ./stop.sh
+  Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
+
+[2026-04-12 17:10:01] LAUNCH: starting smart tradepractice (window 17:10)
+╔══════════════════════════════════════════════╗
+║     SMART TRADEPRACTICE                       ║
+║     Budget-aware, adaptive cycles             ║
+╚══════════════════════════════════════════════╝
+
+  Budget: $0.00 / $30.00 (0%)
+  Stop at: 70%
+  Cycles this window: 0
+  Window resets in: 299 min
+
+  Cost model (from recent runs):
+    opus_analyst: ~$2.84 (6 samples)
+    sonnet_analyst: ~$1.80 (84 samples)
+    sonnet_implementer: ~$0.36 (90 samples)
+
+  Will run cycles until budget reaches 70%
+  Current: 0%
+  Decision: run opus
+
+╔══════════════════════════════════════════════╗
+║  SMART LOOP LAUNCHED                         ║
+╚══════════════════════════════════════════════╝
+
+  View:    tmux attach -t tradepractice
+  Stop:    ./stop.sh
+  Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
+

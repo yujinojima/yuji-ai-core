@@ -2,3 +2,4 @@
 .last-update-id
 .bot.pid
 bot.log
+message-history.json

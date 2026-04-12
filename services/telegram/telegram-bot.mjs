@@ -176,5 +176,50 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// ── Hourly Paper Trade Checkpoints ──────────────────────
+
+const CHECKPOINT_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+let checkpointTimer = null;
+
+async function runCheckpoint() {
+  console.log('[telegram] ⏰ Running hourly paper trade checkpoint…');
+  try {
+    const prompt =
+      'Hourly paper trade checkpoint. Check:\n' +
+      '1. Freqtrade live dry-run — open positions, recent trades, P&L, any errors\n' +
+      '2. Polymarket bot dry-run — markets scanned, simulated trades, any errors\n' +
+      'Send a compact status summary. Flag anything needing attention.';
+    const reply = await runClaude(prompt);
+    await notify(`⏰ Hourly Trade Checkpoint\n\n${reply}`);
+    console.log('[telegram] ✅ Checkpoint sent');
+  } catch (err) {
+    console.error(`[telegram] ❌ Checkpoint failed: ${err.message}`);
+    try {
+      await notify(`⏰ Checkpoint failed: ${err.message}`);
+    } catch {}
+  }
+}
+
+function startCheckpoints() {
+  // First checkpoint 17 minutes after startup, then every hour
+  const now = new Date();
+  const minutesPastHour = now.getMinutes();
+  const targetMinute = 17;
+  let delayMs;
+  if (minutesPastHour < targetMinute) {
+    delayMs = (targetMinute - minutesPastHour) * 60 * 1000 - now.getSeconds() * 1000;
+  } else {
+    delayMs = (60 - minutesPastHour + targetMinute) * 60 * 1000 - now.getSeconds() * 1000;
+  }
+
+  console.log(`[telegram] ⏰ First checkpoint in ${Math.round(delayMs / 60000)} min (at :${targetMinute})`);
+
+  setTimeout(() => {
+    runCheckpoint();
+    checkpointTimer = setInterval(runCheckpoint, CHECKPOINT_INTERVAL_MS);
+  }, delayMs);
+}
+
 // ── Run ─────────────────────────────────────────────────
 start();
+startCheckpoints();
