@@ -193,6 +193,24 @@
 - **Implementation gaps:** (1) `YujiFVGStrategy.py` not yet built; (2) stacked FVG filter is rolling-count proxy (rigorous ±2% zone overlap check deferred); (3) CVD gate is OHLCV approximation (tick data upgrade path if available); (4) 20-cell frequency scan with CVD gate is the immediate next step — determines whether backtest is viable.
 - **Last validated:** never (cycle 69 RESEARCH elevation — 7-anchor mechanism established; frequency scan required before full backtest)
 
+## dealer-gamma-exposure-regime-signal (intermediate, cycle 113)
+- **Works when (Mode A — short-gamma amplification):** GEX < −$100M notional AND spot < gamma_flip × 0.99 (≥ 1% below flip level); dealer delta buying on price rises creates mechanical momentum tailwind; amplify EMA pullback / Bollinger squeeze / FVG / financial-lead-lag sister prim entries 1.10×
+- **Works when (Mode B — long-gamma dampening):** GEX > +$100M AND spot > gamma_flip × 1.01 (≥ 1% above flip level); dealer delta selling on price rises creates mechanical mean-reversion pull; amplify RSI oversold / VWAP deviation / capitulation-exhaustion / liquidity-sweep entries 1.10×; suppress momentum entries 0.90×
+- **Works when (Mode C — gamma flip magnetic zone):** abs(spot − gamma_flip) / spot < 0.01 (within ±1% of flip level); competing dealer forces stabilise spot near flip strike; amplify MR entries 1.05×; no change to momentum entries
+- **Fails when:** Deribit options OI share < 40% (FM2 — incomplete GEX computation); large news gap > 2% bypasses gradual dealer hedging mechanics (FM7 — suspend 4h post-jump); OI dominated by T < 3-day contracts near expiry (FM3 — exclude near-expiry from calculation); retail-driven BTC OI structure differs from equity — expect 50–70% of equity GEX effect magnitude
+- **Conflict protocol with axis 15 (options-iv-skew):** put-skew fear (suppress) + short-gamma (amplify) → net 0.95× (IV skew wins); call-euphoria (amplify) + long-gamma (suppress) → net 1.00× neutral (conflicted); both reinforce → compound up to 0.85× floor or 1.15× ceiling
+- **Anti-prim A:** Mode A/B event count < 6/year over 3yr BTC history → frequency anti-prim; retire sizing, retain Mode C only
+- **Anti-prim B:** G2 correlation scan ρ < 0.15 (GEX sign vs sister prim WR), p > 0.15 → mechanism absent in BTC options market; log as negative result
+- **Anti-prim C:** 30-pair live simulation shows no WR differential between GEX-active and GEX-neutral entries → retire meta-signal sizing entirely
+- **Best pairs:** BTC/USDT:USDT, ETH/USDT:USDT (Deribit options dominant; altcoins excluded)
+- **Best timeframe:** meta-signal refreshed 4h; modulates 1h and 4h sister prim entries
+- **Regime axis:** 16 — dealer gamma exposure (orthogonal to axis 15 options-iv-skew)
+- **Key numbers:** GEX threshold ±$100M notional; gamma flip crossings ~8–12/year (BTC, analytical); Mode A/B active ~15–20% of trading days; WR advantage hypothesis +3–8pp for regime-matched sister prim entries; SpotGamma equity RV differential: ~29% (18% vs 14% realised vol by GEX sign); BTC discount factor: 50–70% of equity effect
+- **Evidence:** 6 academic/practitioner anchors — Gârleanu/Pedersen/Poteshman 2009 RFS (demand-based option pricing), Black & Scholes 1973 JPE (delta-neutrality requirement), Ni/Pan/Poteshman 2008 JF (options OI → future RV), Avellaneda & Stoikov 2008 QF (market maker inventory), Gromb & Vayanos 2010 RFS (limits to arbitrage), SpotGamma Analytics 2018–2024 (GEX equity empirical). Zero own-data crypto validation.
+- **Deployment gates:** G1 (frequency scan: Deribit 2022–2025 daily GEX ≥ 6 Mode A/B events/year) → G2 (correlation scan: binomial test, p < 0.10 for ≥ 3pp WR advantage) → G3 (live paper 30 pairs)
+- **Sophisticated gate:** G1 confirmed + G2 p < 0.10 + ≥ 1 peer-reviewed crypto-specific GEX anchor
+- **Last validated:** cycle 113 (RESEARCH intermediate elevation; equity analogy only; no crypto own-data)
+
 ---
 
 ## Polymarket Conditions
