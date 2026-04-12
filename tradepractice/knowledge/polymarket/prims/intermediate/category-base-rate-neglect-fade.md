@@ -6,6 +6,7 @@ parent_prim: naive/category-base-rate-neglect-fade
 created: 2026-04-12
 last_validated: never
 reaction_validated: no
+status: SUPERSEDED by sophisticated (cycle 112)
 ---
 
 ## Prim: category-base-rate-neglect-fade
