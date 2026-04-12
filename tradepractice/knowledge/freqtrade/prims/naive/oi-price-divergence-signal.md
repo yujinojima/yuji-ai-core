@@ -6,6 +6,8 @@ parent_prim: none
 created: 2026-04-12
 last_validated: never
 reaction_validated: assumed
+status: SUPERSEDED — elevated to intermediate (cycle 88, 2026-04-12)
+superseded_by: freqtrade/prims/intermediate/oi-price-divergence-signal.md
 ---
 
 ## Situation
@@ -127,3 +129,4 @@ dataframe['oi_covering_rally'] = (
 ## Refinement History
 - 2026-04-12: Created as naive prim from traditional futures literature (Bessembinder & Seguin 1993; Hong & Yogo 2012; Chatrath et al. 1996). 11th freqtrade mechanism axis: positioning exhaustion via OI-price divergence. Mechanistically distinct from funding-rate-crowding-reversal (carry cost/flow vs positioning stock) and capitulation-exhaustion-reversal (RSI<20 extreme distress vs moderate RSI 30–45 zone). Data download + frequency scan required before intermediate elevation.
 - 2026-04-12: `YujiOIPriceDivergenceStrategy.py` created (tradepractice cycle 5). Strategy validates OK (freqtrade list-strategies: OK). NEW BLOCKER discovered: `CandleType.OPEN_INTEREST` absent from freqtrade 2026.3 enum; `--candle-types open_interest` also rejected by CLI. Strategy stubs OI as NaN — no trades fire. This additional blocker must be resolved (upstream freqtrade or external OI pipeline) before any backtest is possible. Intermediate elevation now has 2 blockers: (1) OI candle support in freqtrade, (2) Binance #12583 data completeness check.
+- 2026-04-12 (cycle 88): **SUPERSEDED — elevated to intermediate.** Data blocker resolved architecturally via `bot_loop_start()` + Binance `openInterestHist` REST API (same pattern as `YujiLSRContrarian._lsr_data`; no freqtrade enum change required). 5 condition upgrades added: dual OI threshold (rapid ≥7%/10 bars per Bian et al. 2022 JF cascade model; moderate ≥5%/20 bars), regime gate (ADX_4h ≤ 35 + EMA200_4h slope ≥ −2%/20 bars), quarterly rollover exclusion enforced, mutual exclusion gate with capitulation-exhaustion-reversal formalised, RSI floor raised to 25. New academic anchors: Bian et al. (2022, JF) cascade mechanism + Makarov & Schoar (2020, JFE) crypto-perpetuals transfer. Certainty: guess → hypothesis. Next blocking gate: Coinglass 3-year OI archive + frequency scan.
