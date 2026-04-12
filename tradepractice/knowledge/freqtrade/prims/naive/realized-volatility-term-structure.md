@@ -6,7 +6,7 @@ cycle: 101
 axis: 14th regime axis
 signal-class: volatility regime classifier via RV term structure slope
 created: 2026-04-12
-superseded-by: null
+superseded-by: freqtrade/prims/intermediate/realized-volatility-term-structure.md (cycle 103)
 ---
 
 # Realized Volatility Term Structure

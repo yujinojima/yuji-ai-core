@@ -1107,3 +1107,24 @@ Sources:
 - **Blocking for deployment:** G1 H_W IS backtest (strict PIT, N≥30 minimum, WR≥52%, 11 stratified sub-analyses); G2 sybil cluster analysis; G3 category segmentation; G4 clean IS backtest (Tier B WR≥58%); G5 OBI joint calibration (joint WR uplift ≥5pp for Tier A at α=0.20); G6 empirical ρ calibration.
 - **Competitive moat:** <10 systematic operators globally; ~$150/month infra cost; 4–8 week replication barrier (PIT PnL ranking + sybil detector + OBI monitor).
 - **Prim bank after cycle 102:** 19 naive (19 superseded, 0 active) / 19 intermediate (1 active: low-friction-venue-lead; wallet-reputation-directional superseded) / 19 sophisticated (polymarket)
+
+## realized-volatility-term-structure (naive → intermediate) — 2026-04-12 [cycle 103]
+- **Status:** SUPERSEDED by intermediate prim (cycle 103). See intermediate entry below.
+
+## realized-volatility-term-structure (naive) — 2026-04-12 [cycle 101]
+- **Works when (naive, superseded):** `RV_ratio < 0.60` (contango) → long bias; `RV_ratio > 1.50 AND RSI < 40` → mean reversion bias. Directionally ambiguous (no trend gate). Standalone entries.
+- **Fails when:** Coiling in downtrend (type-B); sustained low-vol drift (type-C); warmup NaN artifact; RV_ratio threshold unadjusted for pair differences
+- **Evidence:** theoretical only (Corsi 2009 HAR-RV). No crypto backtest.
+- **Superseded:** cycle 103
+
+## realized-volatility-term-structure (intermediate) — 2026-04-12 [cycle 103]
+- **Works when:** `RV_ratio < rv_coiling_threshold` (default 0.60) AND ratio DECLINING ≥ `rv_coiling_slope_bars` (default 3) consecutive bars AND `ema_200_4h > ema_200_4h.shift(20)` (4h EMA200 slope positive — MANDATORY prior trend gate) AND `adx_4h < 40` AND 5-bar coiling persistence; meta-signal: amplify all sister prim long entries 1.15× for 24h; if BBW squeeze simultaneously active, amplify BBW prim entry signal 1.15×. Hot suppression: `RV_ratio > rv_hot_threshold AND RSI_14 < rv_hot_rsi_threshold AND ADX_4h < 35` → suppress longs 0.85× for 24h; bypass if `ADX_4h ≥ 35` (trending crash); bypass if CER conditions active (hard mutual exclusion).
+- **Fails when:** Sustained contango drift (2019-style grind, `RV_ratio < 0.60` for 60–90+ days with no expansion) → cap at 5 episodes/14d rolling; type-B false signal (downtrend misclassified, 4h slope positive but recent trend turn) → add `close > ema_200_4h` secondary gate; fake compression (3-bar decline then immediate rebound, < 5-bar persistence) → enforce persistence requirement; warmup NaN artifact (first 168 bars) → warmup guard required
+- **Best pair(s):** BTC/USDT:USDT, ETH/USDT:USDT (1h); cross-pair scope pending G3 validation (BTC/ETH/SOL/BNB)
+- **Best timeframe:** 1h (primary compute); 4h informative pair required for EMA200 slope and ADX context gates
+- **Best regime:** Uptrend coiling (type-A) only. NOT valid in downtrend, neutral drift, or parabolic trend (ADX_4h > 40)
+- **Evidence:** 5 academic anchors: Corsi 2009 JFE (HAR-RV primary anchor: term structure slope predicts vol regime, R²=0.47–0.71), Andersen-Bollerslev-Diebold-Labys 2001 JASA (RV long-memory, lognormal; half-life 5–10d equities → 10–20d crypto per GARCH persistence), Bollerslev-Tauchen-Zhou 2009 RFS (variance risk premium post vol-spike → return predictability, mechanism for hot suppression), Katsiampa 2017 FRL (BTC α+β=0.968: extended contango episodes, sharper compression→expansion amplitude), Bekaert-Hoerova 2014 JME (vol term structure as institutionally-validated macro regime classifier). Zero own-data backtest.
+- **Last validated:** never (RESEARCH elevation — cycle 103; prior trend gate, declining ratio gate, persistence requirement, BBW dual-confirmation, hot ADX exception, meta-signal architecture, warmup guard, 4 failure modes; NOT yet backtested)
+- **Blocking prerequisites for sophisticated:** G1 frequency scan (BTC/ETH 1h 2022–2026, target n ≥ 15 qualifying episodes/year per pair; fail → collapse into BBW prim gate); G2 forward return test (Mann-Whitney U p < 0.05 at 24h horizon; fail → no forward return anomaly, retire as amplification); G3 cross-pair threshold stability (BTC/ETH/SOL/BNB, threshold requires ≤ ±0.15 adjustment across pairs; fail → restrict to BTC/ETH only); G4 BBW axis independence (Spearman ρ(RV_coiling, BBW_squeeze) < 0.70 on BTC 1h; fail → collapse into BBW axis as secondary gate, NOT a new axis)
+- **Implementation gaps (6):** (1) prior trend gate `ema_200_4h > ema_200_4h.shift(20)` hard gate; (2) declining ratio `rv_ratio.shift(slope_bars) > rv_ratio`; (3) 5-bar persistence rolling count; (4) hot ADX exception `adx_4h < 35`; (5) warmup NaN guard; (6) 4h informative pair for EMA200/ADX — all require `informative_pairs()` addition in YujiRegimeStrategy.py
+- **Prim bank after cycle 103:** 14 naive (14 superseded + 0 active) / 18 intermediate (1 active: realized-volatility-term-structure; perp-spot-basis superseded awaiting G1) / 18 sophisticated
