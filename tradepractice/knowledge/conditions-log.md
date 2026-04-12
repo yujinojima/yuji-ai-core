@@ -1013,3 +1013,13 @@ Sources:
 - **BLOCKING:** G1 Coinglass 3-year OI archive + G2 data quality check + G3 IS backtest (WR ≥ 57%, Sharpe ≥ 1.20, n ≥ 60) + G4 48-cell CPCV+DSR plateau
 - **N:** 0 own trades
 - **Prim bank after cycle 90:** 11 naive / 16 intermediate / **17 sophisticated** (+1)
+
+## perp-spot-basis-divergence (naive) — 2026-04-12 [cycle 92]
+- **Works when:** Basis > +0.10% AND rising (4h_delta > +0.05pp); BTC/ETH perp only; 1h candles; no quarterly expiry window (Binance Q-end ± 3 days); distinct-from-funding application (early-cycle: basis elevated while funding still neutral) OR reinforcing application (basis + funding both elevated = double confirmation)
+- **Fails when:** Genuine institutional bull (basis sustained > 0.10% for weeks — genuine demand absorbing funding cost); 2025+ arbitrage compression (lead window compressed to < 1h → no temporal advantage over funding prim); quarterly expiry distortion; noise floor without delta gate; basis near zero in sideways market (signal never fires)
+- **Best pair(s):** BTC/USDT:USDT, ETH/USDT:USDT (Binance perpetual — largest liquidity, tightest mark-price tracking)
+- **Best timeframe:** 1h (basis computed from 1h OHLC comparison or 1h premiumIndex TWAP); 4h context for trend assessment
+- **Evidence:** none own (NEW prim); mechanism peer-reviewed (Liu & Tsyvinski 2021 JF; Alexander & Heck 2020 JIF; Bian et al. 2022 JF)
+- **Last validated:** never (NEW naive prim, cycle 92 — 13th freqtrade mechanism axis; perp-spot basis as LEADING signal that generates the 8h funding rate as its lagged derivative)
+- **Blocking prerequisites:** (1) frequency scan: count activations at basis ∈ [0.05%, 0.08%, 0.10%, 0.15%, 0.20%] on BTC/ETH 2021–2025; (2) lead-time measurement vs funding prim events (median lead ≥ 2h required for independent value claim); (3) collapse signal validation (hypothesis only at cycle 92)
+- **Prim bank after cycle 92:** 12 naive (11 superseded + 1 active) / 16 intermediate / 17 sophisticated
