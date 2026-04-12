@@ -1049,7 +1049,11 @@ Sources:
 - **Blocking prerequisites for intermediate:** (1) Granger causality test: historical Manifold vs PM price time series on N≥50 co-listed political events 2022–2025 — confirm Manifold leads PM in ≥ 60% of directional moves; (2) directional accuracy measurement at ≥ 10 pp threshold; (3) manifold_pm_matcher.py semantic classifier; (4) optimal threshold calibration by category (election vs economic vs tech)
 - **Prim bank after cycle 95:** 17 naive (17 superseded, 0 active) / 17 intermediate (0 active) / 17 sophisticated + low-friction-venue-lead (18th naive, active)
 
+## low-friction-venue-lead (intermediate → sophisticated) — 2026-04-12 [cycle 100]
+- **Status:** SUPERSEDED by sophisticated prim (cycle 100). See sophisticated entry below.
+
 ## low-friction-venue-lead (intermediate) — 2026-04-12 [cycle 96]
+- **Status:** SUPERSEDED by sophisticated prim (cycle 100). See sophisticated entry below.
 - **Works when (Mode A — Manifold lead):** Manifold price diverges from PM YES by ≥ 10 pp; gap ≤ 6h old; PM liquidity $5k–$50k; event category ∈ {elections, politics, geopolitics}; semantic similarity ≥ 0.80; same resolution oracle class; PM YES $0.10–$0.90; resolution 7–90d
 - **Works when (Mode B — PredictIt lead):** PredictIt price diverges from PM YES by ≥ 8 pp; gap ≤ 12h old; PM liquidity $15k–$200k; event category ∈ {elections, economics, US politics}; same oracle class; PM YES $0.10–$0.90; resolution 7–90d
 - **Fails when:** H_G test fails (direction inverted → anti-prim); semantic non-fungibility (oracle class mismatch, similarity < 0.80); Mode A at PM liquidity > $50k (professionals dominate); Mode A in macro/economics categories (PM may lead Manifold); PredictIt $850 cap binding on both sides (gap structural, not behavioral); API staleness > gap age limits; breaking news simultaneous on both venues
@@ -1059,7 +1063,21 @@ Sources:
 - **Estimated frequency:** Mode A: 15–40/year; Mode B: 8–20/year; combined 23–60/year
 - **Evidence:** zero own-data. 9 academic anchors (6 from naive + Atanasov et al. 2016 Management Science, Budescu & Chen 2015 Management Science, Cowgill & Zitzewitz 2015 ReStat)
 - **Last validated:** never (RESEARCH elevation — cycle 96; H_G Granger test protocol formalized but not executed)
-- **Blocking for sophisticated:** G1 H_G test (N≥50 Mode A, N≥30 Mode B); G2 semantic matcher validation (precision ≥ 0.85 at N=50 labeled pairs); G3 IS backtest (WR ≥ 55% or median gap closure ≥ 6 pp per mode)
+- **Superseded:** cycle 100 — elevated to sophisticated
+
+## low-friction-venue-lead (sophisticated) — 2026-04-12 [cycle 100]
+- **Works when:** Three-tier structure (Tier A: both venues agree same direction, Kelly α=0.20; Tier B: single venue gap ≥15pp/12pp or widening, α=0.15; Tier C: single venue at threshold minimum, α=0.10); PM YES $0.15–$0.85 (tighter than intermediate); gap ≥ 1h old (Stage 2 cascade initiated) AND ≤ 6h (Mode A) / ≤ 12h (Mode B); Manifold quality gate: ≥30 unique traders, ≥1,000 Mana volume; H_G confirmed (G1+G2 passed); semantic matcher precision ≥ 0.85 (G3 passed); N_eff Kelly scaling applied for concurrent election-cycle signals
+- **Fails when:** H_G_A inverts (PM leads Manifold > 50%: anti-prim A); Gap < 1h (bot-contested zone, failure mode 6); Gap > 6h/12h age limit (Stage 3 complete, no entry); PM YES > 0.85 (resolution risk dominates, exit immediately); N_eff Kelly < $50 position (not worth acting); Manifold noise gate fails (< 30 traders); oracle class contamination (Class B economic resolving as Class A political category); anti-prim B triggered (annual WFE WR degradation > 5pp below IS for 12 months); anti-prim C triggered (semantic matcher forward precision < 0.75)
+- **3 anti-prim escape hatches:** A: H_G both modes fail (p̂ Mode A < 0.55 AND p̂ Mode B < 0.52 at required N) → retire; B: WFE degradation > 5pp below IS baseline in trailing 12 months OR avg gap closure time < 2h → suspend; C: matcher forward precision < 0.75 at N≥30 pairs → retrain or retire Mode A
+- **WR ladder (fee-adjusted breakeven):** Mode A 10pp: 52.1% breakeven / 55% target; A 15pp: 48.5% / 62%; B 8pp: 53.6% / 56%; B 12pp: 50.4% / 63%
+- **N_eff Kelly correction:** ρ=0.30 default for co-election signals; N_eff = N / (1 + (N-1) × ρ); scale down by sqrt(N_eff)
+- **Power note:** N=50 → 29% power at α=0.05; use α=0.10 for interim decision; upgrade to α=0.05 at N≥155 (Mode A) / N≥120 (Mode B)
+- **Estimated frequency:** Tier A: 4–8/year; Mode A Tier C: 15–40/year; Mode B Tier C: 8–20/year; combined 27–68/year
+- **Competitive moat:** Friction differential structural (2–5+ years); semantic matching infrastructure barrier (1–3 years before competitors replicate); PredictIt $850 cap (unknown regulatory horizon); annual recalibration required
+- **Evidence:** zero own-data. 14 academic anchors (9 from intermediate + Bikhchandani-Hirshleifer-Welch 1992 JPE cascade theory, Granger 1969 Econometrica, Gennaioli-Shleifer 2010 QJE, Bailey-Borwein-Lopez de Prado 2014 AMS, Watts-Dodds 2007 JCR)
+- **Last validated:** never (RESEARCH elevation — cycle 100; H_G fully specified with power calculation, sample size, Bonferroni-Holm; 3 anti-prim escape hatches; 10 failure modes; 3-tier structure; deployment G1–G6 sequence defined)
+- **Blocking for deployment:** G1 H_G Mode A (N≥50), G2 H_G Mode B (N≥30), G3 semantic matcher validation (precision ≥0.85), G4 IS backtest, G5 noise gate calibration, G6 N_eff calibration
+- **Prim bank after cycle 100:** 19 naive (19 superseded, 0 active) / 19 intermediate (1 active: wallet-reputation-directional; low-friction-venue-lead superseded) / 18 sophisticated (polymarket)
 
 ## wallet-reputation-directional (naive) — 2026-04-12 [cycle 97]
 - **Status:** SUPERSEDED by intermediate prim (cycle 99). See intermediate entry below.
