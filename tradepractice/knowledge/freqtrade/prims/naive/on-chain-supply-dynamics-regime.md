@@ -159,6 +159,7 @@ def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
 
 ## Refinement History
 - 2026-04-13: Created as naive prim — cycle 122. 18th freqtrade regime axis. First on-chain (blockchain-native) regime classifier. Data blocker (Glassnode API auth + entity-adjusted flows) is primary intermediate gate. 6 academic anchors established. Frequency concern: MVRV extreme episodes ~5 in 9 years — intermediate must use MVRV Z-score or lower threshold for acceptable frequency.
+- 2026-04-13: **SUPERSEDED by intermediate — cycle 123.** Four structural upgrades: (1) five-zone gradient (binary 2.5/1.0 → Zone 1–5 with MVRV 2.0/2.5/1.1/1.0 thresholds + Z-score secondary + SOPR dual-confirmation for Zone 3/5 full weight); (2) duration gate state machine (90d suppress / 30d amplify; INACTIVE/PHASE_1/PHASE_2; 5-day neutral reset); (3) N_eff redundancy protocol (4 co-occurrence rules for axis 6 CER and axis 7 funding with multiplicative compounding floor 0.72×); (4) SOPR API integration + entity-adjusted flow endpoints + complete bot_loop_start() implementation pattern. 8 sources (6 carried + Shirakashi 2019 Glassnode SOPR + Carter & Le Calvez 2018 realized cap). See: freqtrade/prims/intermediate/on-chain-supply-dynamics-regime.md
 
 ## Anti-Prim Gates (Naive)
 
