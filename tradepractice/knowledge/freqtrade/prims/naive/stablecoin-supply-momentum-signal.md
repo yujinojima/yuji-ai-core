@@ -23,7 +23,7 @@ signal-class: crypto-market liquidity proxy (meta-signal — no standalone entri
 ---
 
 ## Prim: stablecoin-supply-momentum-signal
-**Level:** naive | **Project:** freqtrade | **Axis:** 22nd regime axis
+**Level:** naive — **SUPERSEDED** by intermediate (cycle 137) | **Project:** freqtrade | **Axis:** 22nd regime axis
 
 ### Rationale for new axis (not intermediate elevation)
 
