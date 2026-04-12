@@ -19,6 +19,20 @@
 
 ## Freqtrade Conditions
 
+## volatility-risk-premium-regime-signal (sophisticated, cycle 129)
+- **Works when (amplify):** VRP_z > +1.5σ (rolling 90d) **AND** rv_7d_trend < 0 (RV declining from spike peak — post-crash recovery). Direction gate is mandatory — without it, amplify fires into continuing crashes. put_skew > +3% (Mode B) confirms put-fear mechanism → 1.12×/1.15×/1.20× MR modifier. put_skew ≤ +3% → unconfirmed amplify at 1.08×. Analytically confirmed ~4.6 direction-gated signals/year (6.1 raw × 0.75 direction-filter).
+- **Works when (suppress):** VRP_z < −1.5σ; call_skew > +3% (Mode B) → suppress MR prims 0.85×, momentum prims exempt (call-euphoria = directional conviction for trend prims); call_skew ≤ +3% → suppress all prims 0.85× (put-driven complacency); VRP_z < −2.0 → 0.82×. Duration: suppress soft-caps at 0.93× after 45d.
+- **neutral_hot state (direction gate withheld):** VRP_z > +1.5 AND rv_7d_trend ≥ 0 (RV still rising during crash) → no amplify; 1.00× modifier. Prevents amplifying into LUNA/FTX-type extending collapses.
+- **N_eff compounding:** When axes 14 + 16 + 20 all fire simultaneously: N_eff = N / (1 + (N-1)×0.35); combined modifier capped at 1.25× amplify / floored at 0.80× suppress across all three axes.
+- **Duration gate:** Amplify soft-caps at 1.04× after 30d (Carr & Wu 2009 post-crash premium decay); suppress soft-caps at 0.93× after 45d. Exponential decay profile from full modifier to soft cap.
+- **Mode B routing:** Deribit 25-delta REST for live signals; Mode A (DVOL) fallback on API error. A1 ADX bypass superseded — Mode B call-vs-put decomposition directly encodes prim-class routing.
+- **Fails when:** DVOL API unreachable for > 4h (stale → neutral_hot default, 1.00× modifier); early crash phase misidentified as recovery (rv_7d_trend gate requires clean daily bars); ETH VRP diverges from BTC (0.90× discount maintained); IS backtest fails D1 criteria.
+- **Best pairs:** BTC/USDT:USDT primary; ETH/USDT:USDT with 0.90× discount (D6 required to remove)
+- **Best timeframe:** VRP_z + state refreshed via bot_loop_start() 4h; YZ-RV from 1h bars resampled daily; DVOL daily REST
+- **Evidence:** 8 academic anchors (BTZ 2009, Han & Li 2019 JFE direct crypto, Carr & Wu 2009, Dew-Becker 2017, Bekaert-Hoerova 2014, Prokopczuk 2019 JFM, Bollerslev-Marrone 2014 MS, Amaya 2015 JF); G1 amplify 4.6/year (direction-gated analytical estimate; empirical IS scan pending); 3 cross-regime independence proofs
+- **Deployment gates outstanding:** D1 (direction-gated IS backtest WR ≥ 52%, n ≥ 12, Mann-Whitney p < 0.10), D2 (neutral_hot state confirmation WR ≤ 50%), D3 (Mode B suppress IS backtest), D4 (81-cell CPCV+DSR IS scan; IS Sharpe ≥ 0.70), D5 (empirical ρ(VRP_z, axis14) ≤ 0.70; ρ(VRP_z, axis16) ≤ 0.70), D6 (ETH VRP IS scan)
+- **Last validated:** cycle 129 (intermediate → sophisticated; analytical elevation; no live data validation)
+
 ## volatility-risk-premium-regime-signal (naive → intermediate, cycle 128)
 - **Works when (amplify):** VRP_z > +1.5σ (rolling 90d); post-crash or post-correction regime where realised vol substantially exceeded implied vol; Deribit DVOL accessible + BTC OHLCV for YZ-RV computable; episodes ~6.1/year analytically confirmed (13 documented 2019–2025); Han & Li (2019) direct crypto evidence: positive VRP → positive next-week returns
 - **Works when (suppress):** VRP_z < −1.5σ; bull-euphoria regimes where implied vol exceeds realised (call-IV elevated); episodes ~4.4 non-overlapping 14-day windows/year concentrated in bull-phase years; 0.90× confidence discount applied (suppress-side crypto evidence weaker)
