@@ -19,6 +19,16 @@
 
 ## Freqtrade Conditions
 
+## btc-etf-institutional-flow (naive, cycle 133)
+- **Works when (amplify):** etf_flow_z > +1.5 (rolling 30d normalisation of net daily US BTC ETF flows). Mechanism: AP arbitrage creates forced spot buying. Most reliable when flow persists across 2+ consecutive days (institutional rebalancing program ongoing). Conservative modifier 1.08× reflects short data window.
+- **Works when (suppress):** etf_flow_z < −1.5. Mechanism: AP arbitrage creates forced spot selling. Asymmetric — GBTC structural outflows distort net calculation; exclude GBTC or weight down at intermediate tier.
+- **Fails when:** (F1) 24h data lag makes signal contemporaneous rather than leading — if price reacts same-day to AP buying, T+1 signal arrives after the move. (F2) Strong institutional momentum conflicts with MR prims (amplifying a counter-trend long during institutional buy wave). (F3) Short data window (27 months) limits IS validation. (F4) AUM scale change (must normalise by rolling AUM, not fixed dollar). (F5) Non-AP secondary market trades dilute mechanical signal. (F6) GBTC structural outflows mask genuine bearish redemptions.
+- **Best pairs:** BTC/USDT primary; ETH/USDT secondary (ETH spot ETFs launched Jul 2024, lower AUM).
+- **Best timeframe:** Meta-signal refreshed daily via bot_loop_start(); data available with ~24h lag. 5-day forward return window per Coval & Stafford 2007.
+- **Evidence:** 3 academic anchors (Ben-David/Franzoni/Moussawi 2012 JF; Coval/Stafford 2007 JF; Wermers 2000 JF). No own-data backtest. G1 lead/lag test BLOCKING.
+- **Deployment gates outstanding:** G_DATA (CoinGlass API key + Farside scraper verified); G1 (frequency scan + lead/lag test — T+1 predictive slope must be positive on next-1d BTC return; n ≥ 10 amplify events; ρ(etf_flow_z, axis7) < 0.70)
+- **Last validated:** cycle 133 (naive registered; analytical; no live data validation)
+
 ## volatility-risk-premium-regime-signal (sophisticated, cycle 129)
 - **Works when (amplify):** VRP_z > +1.5σ (rolling 90d) **AND** rv_7d_trend < 0 (RV declining from spike peak — post-crash recovery). Direction gate is mandatory — without it, amplify fires into continuing crashes. put_skew > +3% (Mode B) confirms put-fear mechanism → 1.12×/1.15×/1.20× MR modifier. put_skew ≤ +3% → unconfirmed amplify at 1.08×. Analytically confirmed ~4.6 direction-gated signals/year (6.1 raw × 0.75 direction-filter).
 - **Works when (suppress):** VRP_z < −1.5σ; call_skew > +3% (Mode B) → suppress MR prims 0.85×, momentum prims exempt (call-euphoria = directional conviction for trend prims); call_skew ≤ +3% → suppress all prims 0.85× (put-driven complacency); VRP_z < −2.0 → 0.82×. Duration: suppress soft-caps at 0.93× after 45d.
