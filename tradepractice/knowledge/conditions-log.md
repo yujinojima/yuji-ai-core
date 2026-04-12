@@ -1036,6 +1036,9 @@ Sources:
 - **Last validated:** never (intermediate elevation via RESEARCH, cycle 94; H_L and H2 unconfirmed; no own-data backtest)
 - **Prim bank after cycle 94:** 12 naive (12 superseded, 0 active) / 17 intermediate (1 active: perp-spot-basis-divergence) / 17 sophisticated
 
+## low-friction-venue-lead (naive → intermediate) — 2026-04-12 [cycle 96]
+- **Status:** SUPERSEDED by intermediate prim (cycle 96). See intermediate entry below.
+
 ## low-friction-venue-lead (naive) — 2026-04-12 [cycle 95]
 - **Works when:** Manifold Markets community price OR PredictIt financially-incentivised price diverges from semantically equivalent Polymarket YES price by ≥ 10 pp; divergence ≤ 6h old (fresh signal only); PM liquidity $5k–$50k; resolution horizon 7–60 days; US political or electoral events (highest Manifold/PredictIt co-listing overlap with PM); semantic equivalence manually confirmed (same resolution authority, same threshold, same scope)
 - **Fails when:** Semantic non-equivalence (different resolver, different threshold — **#1 failure mode**); PM liquidity > $50k (sophisticated participants dominate — already priced); Manifold < 50 predictors for the market; PredictIt < 1k shares outstanding (illiquid signal); resolution horizon < 7 days (PM leads at short horizon); divergence stale > 6h (informed non-trading = rational gap); subjective/jury-resolved events; Granger causality direction inverted (PM leads Manifold — prim would be anti-prim); breaking news within 2h (both venues may be updating simultaneously — not a lag)
@@ -1045,3 +1048,16 @@ Sources:
 - **Last validated:** never (NEW naive prim, cycle 95 — 18th polymarket signal class; behavioral anchoring lag between low/zero-capital-risk venues and large-position PM)
 - **Blocking prerequisites for intermediate:** (1) Granger causality test: historical Manifold vs PM price time series on N≥50 co-listed political events 2022–2025 — confirm Manifold leads PM in ≥ 60% of directional moves; (2) directional accuracy measurement at ≥ 10 pp threshold; (3) manifold_pm_matcher.py semantic classifier; (4) optimal threshold calibration by category (election vs economic vs tech)
 - **Prim bank after cycle 95:** 17 naive (17 superseded, 0 active) / 17 intermediate (0 active) / 17 sophisticated + low-friction-venue-lead (18th naive, active)
+
+## low-friction-venue-lead (intermediate) — 2026-04-12 [cycle 96]
+- **Works when (Mode A — Manifold lead):** Manifold price diverges from PM YES by ≥ 10 pp; gap ≤ 6h old; PM liquidity $5k–$50k; event category ∈ {elections, politics, geopolitics}; semantic similarity ≥ 0.80; same resolution oracle class; PM YES $0.10–$0.90; resolution 7–90d
+- **Works when (Mode B — PredictIt lead):** PredictIt price diverges from PM YES by ≥ 8 pp; gap ≤ 12h old; PM liquidity $15k–$200k; event category ∈ {elections, economics, US politics}; same oracle class; PM YES $0.10–$0.90; resolution 7–90d
+- **Fails when:** H_G test fails (direction inverted → anti-prim); semantic non-fungibility (oracle class mismatch, similarity < 0.80); Mode A at PM liquidity > $50k (professionals dominate); Mode A in macro/economics categories (PM may lead Manifold); PredictIt $850 cap binding on both sides (gap structural, not behavioral); API staleness > gap age limits; breaking news simultaneous on both venues
+- **Mode A exit:** gap ≤ 3 pp OR 48h max
+- **Mode B exit:** gap ≤ 4 pp OR 96h max
+- **Capital friction model:** Manifold ≈ 0% friction floor (play money); PredictIt ≈ 0.50% round-trip; PM ≈ 2% on wins; friction differential drives lead-lag
+- **Estimated frequency:** Mode A: 15–40/year; Mode B: 8–20/year; combined 23–60/year
+- **Evidence:** zero own-data. 9 academic anchors (6 from naive + Atanasov et al. 2016 Management Science, Budescu & Chen 2015 Management Science, Cowgill & Zitzewitz 2015 ReStat)
+- **Last validated:** never (RESEARCH elevation — cycle 96; H_G Granger test protocol formalized but not executed)
+- **Blocking for sophisticated:** G1 H_G test (N≥50 Mode A, N≥30 Mode B); G2 semantic matcher validation (precision ≥ 0.85 at N=50 labeled pairs); G3 IS backtest (WR ≥ 55% or median gap closure ≥ 6 pp per mode)
+- **Prim bank after cycle 96:** 18 naive (18 superseded, 0 active) / 18 intermediate (2 active: perp-spot-basis-divergence + low-friction-venue-lead) / 17 sophisticated
