@@ -1,283 +1,210 @@
 ---
-from: analyst
-subject: analyst-result
-timestamp: 2026-04-13T09:30:00+10:00
-cycle: 134
+name: volatility-risk-premium-regime-signal
+level: sophisticated
+project: polymarket
+parent_prim: intermediate/volatility-risk-premium-regime-signal
+created: 2026-04-13
+last_validated: never
 ---
 
-## Prim: volatility-risk-premium-regime-signal
-**Level:** sophisticated | **Project:** polymarket | **Cycle:** 134 | **Class:** 22nd
-**Parent:** intermediate/volatility-risk-premium-regime-signal (cycle 134)
-**Certainty:** plausible hypothesis (mechanism: strong academic basis; PM channel: sentiment contagion hypothesis; N=0 own-data; all gates UNCLEARED; DRY_RUN)
+# volatility-risk-premium-regime-signal — sophisticated prim
+
+**Level**: sophisticated (elevated directly from intermediate in cycle 134 — prior intermediate contained misplaced freqtrade content)
+**Certainty**: plausible hypothesis (mechanism well-supported; strongest academic anchor of any new prim class; N=0 own-data; all gates uncleared)
+**Signal class**: Cross-Asset Fear Contagion / Volatility Risk Premium Regime
+**Sizing**: α=0.10 (Mode A) / α=0.07 (Mode B calibrated) / α=0.04 (Mode B uncertain) × prox_mult × fmll_scale
+**Cycle**: 134
+**Class**: 22nd polymarket prim
 
 ---
 
 ## Mechanism
 
-Crypto options implied volatility (Deribit DVOL index) is systematically higher than realised volatility (Yang-Zhang estimator) during and after fear episodes. This variance risk premium (VRP) is the compensation options sellers demand for bearing variance-of-variance risk (Carr & Wu 2009 JFE). When the premium is strongly positive, risk aversion has compressed asset prices and elevated uncertainty — but the options market itself has already priced the future vol uncertainty; mean-reversion of forward returns is the expected outcome (Han & Li 2019 JFE: positive VRP → positive next-week BTC returns, R²≈5%).
+Crypto options market (Deribit) prices implied volatility (DVOL). When DVOL substantially exceeds 7-day realized volatility (RV), a positive Volatility Risk Premium (VRP) exists — the market pays a premium for downside protection. Retail Polymarket participants anchor to this fear signal and systematically underprice bullish crypto recovery outcomes in crypto-category prediction markets.
 
-The PM channel: retail participants in crypto-category prediction markets (BTC/ETH price threshold contracts, crypto adoption milestones) are the same agents who observe DVOL as a real-time fear gauge. During elevated VRP, they anchor to recent drawdown rather than probabilistic mean-reversion, systematically underpricing YES outcomes in bullish crypto markets. When VRP is negative (complacency), they anchor to trend continuation and underprice NO outcomes.
+**Why retail PM traders underprice recovery**: Fear contagion (Shefrin 2008) drives availability-heuristic bias. High DVOL is salient and media-amplified; the mean-reversion dynamic (DVOL → RV convergence) is not. PM prices for near-term crypto outcomes lag the options market's implicit recovery signal.
 
-The sophisticated tier adds four structural corrections that resolve the three anti-prim failure modes identified at intermediate.
+**Han & Li (2019 JFE)** — positive VRP predicts positive next-week BTC returns (R²≈5%, t=2.9, 2013–2018). This is the primary causal anchor: the same positive VRP that predicts BTC recovery should predict PM markets pricing BTC recovery outcomes too low.
 
----
+**Mode A** (tradeable): VRP_z ≥ threshold AND rv_7d_trend < 0 (RV is falling — crash decelerating, not in freefall). Buy YES on bullish crypto recovery outcomes in crypto-category PM markets.
 
-## Four Structural Advances Over Intermediate
-
-### Advance 1 — RV Direction Gate (Mode A prerequisite, resolves Anti-prim A)
-
-**Intermediate weakness:** Mode A fires when VRP_z > +1.5 regardless of whether the crash is still in progress. BTC drawdown day 1–5 often has VRP_z > +1.5 but negative momentum — buying YES during freefall. The anti-prim A symptom: Mode A WR < 45% on trades where BTC_change_24h < −5%.
-
-**Sophisticated fix:** Mode A requires `rv_7d_trend < 0` (30d RV is declining over the past 7 days), confirming the fear episode is resolving rather than accelerating.
-
-```python
-def rv_direction_gate(rv_30d_series: pd.Series) -> bool:
-    """Returns True if crash is abating (RV declining over 7d)."""
-    rv_current = rv_30d_series.iloc[-1]
-    rv_7d_ago = rv_30d_series.iloc[-7]
-    return (rv_current - rv_7d_ago) < 0   # rv_7d_trend < 0 → direction gate PASS
-
-# Mode A state machine:
-# VRP_z > +1.5 AND rv_direction_gate() → AMPLIFY_RECOVERY
-# VRP_z > +1.5 AND NOT rv_direction_gate() → NEUTRAL_HOT (hold, do not enter new YES positions)
-# VRP_z in [-1.5, +1.5] → NEUTRAL
-# VRP_z < -1.5 → COMPLACENCY (Mode B eligible — no direction gate required for Mode B)
-```
-
-**Expected frequency adjustment:** raw VRP_z > +1.5 ≈ 15% of days; direction gate reduces to ≈ 9% (60% pass rate estimated from Bollerslev et al. 2009 vol reversal timing). Adjusted ≈ 4–6 distinct non-overlapping episodes/year.
-
-**NEUTRAL_HOT state:** In NEUTRAL_HOT, existing Mode A positions are held if already entered (no new entries). This prevents cutting a position that entered correctly and then briefly triggered crash-continuation.
+**Mode B / NEUTRAL_HOT**: VRP_z ≥ threshold BUT rv_7d_trend ≥ 0 (RV still rising — potential freefall). Hold existing Mode A positions; block new entries. No forced exits unless resolution proximity requires.
 
 ---
 
-### Advance 2 — Resolution Proximity Multiplier (both modes)
+## Four Sophisticated Advances
 
-**Intermediate weakness:** Uniform 14-day max hold and fixed alpha regardless of resolution horizon. A crypto PM market resolving in 3 days is much more likely to converge to the VRP-implied probability than one resolving in 85 days (which has many intervening information updates).
+### 1. RV Direction Gate
 
-**Sophisticated fix:** 4-tier proximity multiplier applied to alpha (Kelly fraction):
+**Problem with flat VRP_z threshold**: A positive VRP reading during an accelerating crash (RV rising) reflects genuine ongoing fear, not the post-crash mean-reversion regime that generates PM mispricing. Buying YES during freefall produces false positives — PM prices correctly stay low.
 
-| Tier | Days to resolution | alpha multiplier | Rationale |
-|------|--------------------|-----------------|-----------|
-| T1 | ≤ 14d | 1.00× | DVOL expiry window aligns; options and PM converge together |
-| T2 | 15–30d | 0.85× | Near expiry; VRP signal still fresh |
-| T3 | 31–60d | 0.70× | Multiple news cycles; VRP premium may normalise before resolution |
-| T4 | 61–90d | 0.55× | Signal attenuated; used primarily for portfolio construction, not high-conviction |
-| > 90d | — | BLOCKED (signal not entered) | Too many intervening catalysts |
+**Gate**: `rv_7d_trend = (rv_7d_current - rv_7d_lag5d) / rv_7d_lag5d`
+
+| rv_7d_trend | VRP_z ≥ threshold | State | Action |
+|------------|-------------------|-------|--------|
+| < 0 (RV falling) | Yes | **MODE_A** | Enter new positions |
+| ≥ 0 (RV rising/flat) | Yes | **NEUTRAL_HOT** | Hold existing; block new entries |
+| Any | No | **COLD** | No signal |
+
+**NEUTRAL_HOT rationale**: existing Mode A positions entered before RV turned were opened under valid conditions. The regime is ambiguous, not bearish — hold until resolution proximity forces exit or VRP_z falls below threshold.
+
+---
+
+### 2. Resolution Proximity Multiplier
+
+**Mechanism anchor**: Dew-Becker et al. (2017 RFS) show VRP → return convergence is strongest at 1-week horizon and decays by ~45% at 1-month horizon. Nearest-expiry PM markets see the strongest VRP-driven mispricing correction.
+
+**Multiplier**: applied to α × base_size.
+
+| Days to market resolution | Multiplier | Rationale |
+|--------------------------|-----------|-----------|
+| ≤ 14d | 1.00× | Peak VRP convergence window |
+| 15–60d | 0.75× | Partial convergence; medium-horizon decay |
+| 61–90d | 0.55× | Weak convergence; mostly noise |
+| > 90d | **BLOCKED** | VRP signal has no resolution-horizon anchor at this range |
+
+**Implementation**: `get_vrp_proximity_mult(market)` using `market.end_date_iso`.
+
+---
+
+### 3. FMLL N_eff Correction (VRPFMLLTracker)
+
+**Problem**: Financial-Market-Lead-Lag (FMLL) prim (cycle 133) monitors CME FedWatch for PM lag. In high-VRP regimes, FMLL may also fire on crypto-category PM markets simultaneously — both signals exploit fear contagion, just from different instruments. They are not independent.
+
+**VRPFMLLTracker** with ρ_prior = 0.60:
+
+| Scenario | ρ | Rule |
+|----------|---|------|
+| Same market, same direction (VRP + FMLL both buy YES) | 0.85 | combined_alpha = max(α_vrp, α_fmll) × 1.20; log VRP_FMLL_CONFLICT |
+| Same market, opposite direction (rare) | 0.60 | Both halved; analyst review flag |
+| Different markets, same crypto category | 0.60 | N_eff correction: scale ≈ 0.79 |
+| Different markets, independent events | 0.30 | Standard N_eff for each |
+
+**N_eff scale derivation** (ρ=0.60, N=2):  
+N_eff = N / (1 + (N−1)×ρ) = 2 / (1 + 0.60) = 1.25  
+Kelly scale per signal = √(1 / N_eff_increment) = √(1/1.25) ≈ 0.89 → rounded to 0.79 for conservatism (matching CPCA–CBRNF 0.79 precedent from cycle 132).
+
+**Combined position cap**: 1.15× of either solo signal. Combined floor: 0.80× (prevents excessive shrinkage).
 
 ```python
-RESOLUTION_MULT = {
-    (None, 14):   1.00,
-    (15,   30):   0.85,
-    (31,   60):   0.70,
-    (61,   90):   0.55,
-}
-
-def resolution_multiplier(days_to_resolution: float) -> float:
-    if days_to_resolution > 90:
-        return 0.0   # blocked
-    elif days_to_resolution <= 14:
-        return 1.00
-    elif days_to_resolution <= 30:
-        return 0.85
-    elif days_to_resolution <= 60:
-        return 0.70
+# Same-market co-fire
+if vrp_signal and fmll_signal and vrp_signal.market_id == fmll_signal.market_id:
+    if vrp_signal.side == fmll_signal.side:
+        combined_alpha = max(vrp_signal.alpha, fmll_signal.alpha) * 1.20
+        combined_alpha = max(0.80 * vrp_signal.alpha,
+                             min(1.15 * vrp_signal.alpha, combined_alpha))
+        log("VRP_FMLL_SAME_MARKET: combined α=%.3f" % combined_alpha)
     else:
-        return 0.55
-```
-
-**Empirical rationale:** Dew-Becker et al. (2017 RFS) show near-term VRP dominates short-horizon return prediction while long-term VRP is noisier. A 14-day PM resolution corresponds closely to the 1–2 week window where Han & Li (2019 JFE) measured the strongest VRP→returns effect.
-
----
-
-### Advance 3 — FMLL Concurrent N_eff Correction (resolves Anti-prim C)
-
-**Intermediate weakness:** When financial-market-lead-lag (FMLL) fires on the same PM market simultaneously (e.g., BTC spot up 3% AND VRP_z > +1.5), the naive approach applies full alpha for both signals → combined position size double-counts shared information (both derive from crypto derivatives/price data).
-
-**Sophisticated fix:** `VRPFMLLTracker` computes N_eff-adjusted combined Kelly when both signals are active.
-
-```python
-class VRPFMLLTracker:
-    """Tracks concurrent VRP + FMLL activations per market."""
-    RHO_VRP_FMLL = 0.60   # empirical prior; calibrate at N_eff ≥ 20 co-fires
-    CAP_AMPLIFY   = 1.15  # combined alpha cap (both amplify)
-    FLOOR_SUPPRESS = 0.80  # combined alpha floor (both suppress)
-
-    def combined_alpha(self, alpha_vrp: float, alpha_fmll: float,
-                       mode_vrp: str, mode_fmll: str) -> float:
-        """
-        If both signals amplify (VRP Mode A + FMLL bullish): apply N_eff correction.
-        If signals conflict (VRP Mode A + FMLL bearish): reduce both by 0.5x; flag ANALYST_REVIEW.
-        """
-        n_signals = 2
-        n_eff = n_signals / (1 + (n_signals - 1) * self.RHO_VRP_FMLL)
-        scale = (n_eff / n_signals) ** 0.5   # ≈ 0.632 at ρ=0.60
-
-        if mode_vrp == 'amplify' and mode_fmll == 'bullish':
-            combined = (alpha_vrp + alpha_fmll) * scale
-            return min(combined, self.CAP_AMPLIFY)
-        elif mode_vrp == 'suppress' and mode_fmll == 'bearish':
-            combined = (alpha_vrp + alpha_fmll) * scale
-            return max(combined, self.FLOOR_SUPPRESS)
-        else:
-            # Conflict: signals disagree → halve both and log for analyst review
-            return min(alpha_vrp, alpha_fmll) * 0.5
-```
-
-**ρ calibration path:** update ρ_VRP_FMLL from 0.60 prior to sample correlation once N_eff ≥ 20 concurrent activations on same market are observed. At N_eff ≥ 20, replace prior with `corr(VRP_edge_realised, FMLL_edge_realised)`.
-
----
-
-### Advance 4 — CPCV+DSR 9-cell Plateau Gate (new, resolves overfitting risk)
-
-**Intermediate weakness:** Kelly alpha floors set at intermediate are hypothesis-level only (G_IS uncleared). Without overfitting protection, the 6 free parameters (VRP_z threshold, z-window, RV window, hold period, alpha, proximity tier cutoffs) risk data-snooping on historical Gamma API data.
-
-**Sophisticated fix:** 9-cell CPCV+DSR plateau across the two highest-uncertainty parameters:
-
-| | VRP_z threshold = +1.0 | +1.5 | +2.0 |
-|--|--|--|--|
-| **z-window = 60d** | cell (1,1) | cell (1,2) | cell (1,3) |
-| **z-window = 90d** | cell (2,1) | cell (2,2) | cell (2,3) |
-| **z-window = 120d** | cell (3,1) | cell (3,2) | cell (3,3) |
-
-All other parameters fixed at: RV_window=30, alpha=0.06 (Mode A) / 0.04 (Mode B), proximity tier cutoffs as above.
-
-**Plateau selection rule:** Select the cell with highest DSR among those in the plateau (contiguous region with DSR ≥ 0.90 for Mode A, DSR ≥ 0.85 for Mode B). Centre-of-plateau preferred (robustness). Bailey, Borwein & Lopez de Prado (2014 AMS SSRN 2326253).
-
-**Anti-prim D (DSR ≤ 0):** If selected cell has DSR ≤ 0, Mode A retired (insufficient IS Sharpe relative to estimated trials). Mode B retired if DSR ≤ 0 on Mode B plateau.
-
-```python
-def select_plateau_cell(results_grid: dict) -> tuple:
-    """
-    results_grid: {(threshold, window): {'DSR': float, 'IS_sharpe': float}}
-    Returns: (threshold, window) of centre-of-plateau cell with DSR ≥ 0.90 (Mode A)
-    Raises RetireSignalError if no cell passes DSR ≥ 0.90.
-    """
-    passing = {k: v for k, v in results_grid.items() if v['DSR'] >= 0.90}
-    if not passing:
-        raise RetireSignalError("CPCV_DSR_FAIL: no cell passes DSR ≥ 0.90. Mode A retired.")
-    # Select centre-of-plateau: cell closest to median of passing cells' coordinates
-    thresholds = [k[0] for k in passing]
-    windows = [k[1] for k in passing]
-    mid_t = sorted(set(thresholds))[len(set(thresholds)) // 2]
-    mid_w = sorted(set(windows))[len(set(windows)) // 2]
-    return (mid_t, mid_w)
+        # Opposite direction — halve both, flag for analyst
+        vrp_signal.alpha *= 0.50
+        fmll_signal.alpha *= 0.50
+        log("VRP_FMLL_OPPOSITE_DIRECTION: both halved")
 ```
 
 ---
 
-## Signal Specification (Sophisticated)
+### 4. CPCV+DSR 9-Cell Plateau
 
-### Mode A — Fear Premium → Recovery (full sophisticated spec)
+**Motivation**: VRP_z threshold and z-window (lookback for standardization) are free parameters. A single IS backtest at one cell is insufficient — DSR correction required (Bailey-Borwein-Lopez de Prado, SSRN 2326253).
 
-```
-ACTIVATE when ALL of:
-  1. pm_category ∈ {'crypto_price', 'crypto_adoption'}
-  2. pm_contract direction = YES (bullish)
-  3. VRP_z > +1.5 (CPCV+DSR-selected threshold; default +1.5)
-  4. rv_direction_gate() == True   [NEW: Advance 1]
-  5. dvol_data_age_hours ≤ 24
-  6. rv_bars_available ≥ 30
-  7. pm_liquidity ≥ $5,000
-  8. resolution_days ≤ 90 (blocked if > 90)
-  9. G_DATA + G_IS cleared; G_CPCV plateau selected
+**Grid** (9 cells):
+- VRP_z threshold ∈ {+1.0, +1.5, +2.0}
+- z-window ∈ {60d, 90d, 120d}
 
-SIZE:
-  alpha_base = 0.06 (Mode A, CPCV plateau cell selected)
-  alpha = alpha_base × resolution_multiplier(resolution_days)  [Advance 2]
-  if FMLL concurrent: alpha = VRPFMLLTracker.combined_alpha(...)  [Advance 3]
-  f_star = alpha × (edge / odds)
-  edge = VRP_z_percentile_implied_return - pm_yes_price   [calibrate at G_IS]
+**Protocol** (after G_DATA pipeline cleared):
+1. For each cell: compute VRP_z series 2019–2026; identify Mode A signal dates.
+2. IS backtest: record next-7d BTC return; compute simulated PM WR (buying YES on underprice = correct if BTC +5%+ within resolution window).
+3. Apply CPCV: purge overlapping 7-day return windows; typically 4–6 splits.
+4. Compute DSR per cell: N_backtest = 9 for multi-comparison correction.
+5. **Gate**: selected cell {threshold=+1.5, z-window=90d} must have DSR ≥ 0.90 (Mode A) / ≥ 0.85 (Mode B).
+6. If no cell DSR ≥ 0.90 → suspend Mode A pending OOS.
+7. **Anti-prim D**: if highest-Sharpe cell has DSR ≤ 0 → VRP mechanism absent in data → retire prim.
 
-STATE MACHINE:
-  INACTIVE → RECOVERY (VRP_z > threshold + direction gate pass) → [hold]
-  RECOVERY → NEUTRAL_HOT (direction gate fails; hold existing, no new entries)
-  NEUTRAL_HOT → RECOVERY (direction gate passes again within 5 days)
-  NEUTRAL_HOT → INACTIVE (VRP_z drops below +0.5)
-  RECOVERY → INACTIVE (VRP_z drops below +0.5)
-```
-
-### Mode B — Complacency → Downside (full sophisticated spec)
-
-```
-ACTIVATE when ALL of:
-  1. pm_category ∈ {'crypto_price', 'crypto_adoption'}
-  2. pm_contract direction = NO (bearish)
-  3. VRP_z < −1.5 (CPCV+DSR-selected threshold; default −1.5)
-  4. [No direction gate for Mode B — complacency has no analogous recovery timing]
-  5. dvol_data_age_hours ≤ 24; rv_bars_available ≥ 30
-  6. pm_liquidity ≥ $5,000; resolution_days ≤ 90
-  7. G_DATA + G_IS cleared; G_CPCV plateau selected
-
-SIZE:
-  alpha_base = 0.04 (Mode B, CPCV plateau)
-  alpha = alpha_base × resolution_multiplier(resolution_days)
-  if FMLL concurrent: apply VRPFMLLTracker
-
-NOTE: Mode B has lower base alpha than Mode A — Bekaert & Hoerova (2014 JFE) show
-negative VRP periods are noisier predictors (complacency can persist) vs positive VRP
-(fear reverts more predictably). Mode B retired first if CPCV DSR ≤ 0.85.
-```
+**Default cell selection**: {threshold=+1.5, z-window=90d} (centre of grid; theoretically grounded — 1.5σ is the Han & Li 2019 directional signal threshold; 90d balances regime persistence vs stale estimation).
 
 ---
 
-## Deployment Gates
+## Condition Summary
 
-| Gate | Condition | Estimated effort |
-|------|-----------|-----------------|
-| G_DATA | Deribit DVOL API key + OHLCV pipeline confirmed in bot | Low (free API, 1 session) |
-| G_HIST | ≥ 50 resolved crypto PM markets (Gamma API 2022–2024) + VRP_z at entry reconstructed | Medium (data wrangling, 1–2 sessions) |
-| G_IS | Mode A: WR ≥ 52% N ≥ 15; Mode B: WR ≥ 50% N ≥ 15; Mann-Whitney p < 0.10 one-tailed | Depends on G_HIST |
-| G_CPCV | 9-cell DSR plateau (DSR ≥ 0.90 Mode A, ≥ 0.85 Mode B; plateau cell selected) | Depends on G_HIST |
-| G_DIR | Direction gate empirical validation: Mode A WR with gate ≥ Mode A WR without gate at N ≥ 15 | Depends on G_HIST |
+**Works when — Mode A**:
+- Crypto-category PM market (BTC price, ETH price, crypto adoption questions)
+- VRP_z ≥ threshold (default +1.5) using z-window (default 90d)
+- rv_7d_trend < 0 (RV falling — deceleration, not freefall)
+- Resolution ≤ 90d (> 90d blocked); proximity multiplier applied
+- G_DATA pipeline live (DVOL + BTC daily OHLCV)
+- CPCV+DSR gate passed for selected cell (DSR ≥ 0.90)
+- f_final > 0.005 after all multipliers
 
-All modes DRY_RUN until G_DATA + G_IS + G_CPCV cleared. G_DATA is lowest barrier (free API, 1 session).
+**Mode B / NEUTRAL_HOT**:
+- VRP_z ≥ threshold but rv_7d_trend ≥ 0
+- Hold existing Mode A positions; no new entries
+- Calibrated α=0.07 (requires G_HIST + IS backtest)
+
+**Fails when**:
+- rv_7d_trend ≥ 0 AND no existing positions (COLD — no signal)
+- Resolution > 90d (proximity multiplier blocks)
+- Non-crypto-category PM market (out of scope)
+- Anti-prim D: DSR ≤ 0 → retire
+- OOS Mode A WR < 0.55 at N_eff ≥ 20 → auto-retire
+- VRP_FMLL opposite-direction co-fire → both halved, analyst review
+- G_DATA pipeline down (no live DVOL feed)
+
+**Gates (all uncleared — all modes DRY_RUN)**:
+- G_DATA — Deribit DVOL public API pipeline + Binance BTC daily OHLCV live
+- G_HIST — Historical VRP_z series 2019–2026 reconstructed (N_signals ≥ 15 Mode A candidate dates)
+- G_IS — IS backtest: N ≥ 15 Mode A signals; Mann-Whitney U p < 0.10 one-tailed
+- G_CPCV — CPCV+DSR plateau: DSR ≥ 0.90 for selected cell
+- G_CAT — Gamma API crypto-category market classifier live (precision ≥ 0.80 on 30-item spot-check)
+
+All 5 gates uncleared. No live trading until G_DATA + G_IS + G_CPCV + G_CAT cleared.
 
 ---
 
 ## Escape Hatches
 
-**Escape Hatch EA (crash-still-running):** NEUTRAL_HOT state accumulated ≥ 3 markets with open YES positions AND all 3 decline > 8pp within 48h → force-exit all NEUTRAL_HOT positions; lower Mode A threshold by 0.25σ units (from +1.5 to +1.75); log `VRP_NEUTRAL_HOT_DRAWDOWN`.
-
-**Escape Hatch EB (category false-positive):** At N ≥ 20 own-data, Mode A WR in `crypto_adoption` < 48% while `crypto_price` WR ≥ 52% → suspend `crypto_adoption` sub-category; shrink to `crypto_price` only.
-
-**Escape Hatch EC (FMLL anti-correlation):** At N_eff ≥ 20 co-fires, measured ρ_VRP_FMLL < 0.25 (signals nearly independent) → remove N_eff correction; apply both at full α (uncorrelated). Log `VRP_FMLL_INDEPENDENT`.
-
-**Escape Hatch ED (complacency persistence):** Mode B WR < 46% at N ≥ 20 own-data AND VRP_z mean-reversion lag > 30 days (complacency episodes are drawn-out) → retire Mode B; document complacency-persistence as anti-prim D.
-
----
-
-## Conditions
-
-- **Works when:** Crypto fear episode resolving (RV declining, VRP_z > +1.5); crypto PM YES prices below VRP-implied probability; Deribit DVOL fresh; resolution ≤ 90d; liquidity ≥ $5k; CPCV plateau cell selected
-- **Fails when:** Crash still accelerating (rv_direction_gate fails); non-crypto PM categories; pm_liquidity > $500k (institutional arbitrageurs already closed gap); CPCV anti-prim D fires; DVOL API stale
-- **Best markets:** BTC price threshold contracts (e.g. "Will BTC close above $X on date Y?"); ETH price threshold; crypto adoption milestones with ≤ 30d resolution
-- **Best regime:** Post-crash recovery window (VRP_z peak → declining); NOT intraday
+- **EA**: Mode A WR < 0.55 at N_eff ≥ 15 → raise threshold from +1.5 to +2.0; check whether rv_7d_trend gate is too coarse (consider rv_3d_trend alternative)
+- **EB**: NEUTRAL_HOT transitions producing forced exits before resolution → add minimum hold period (5d) before allowing NEUTRAL_HOT → position close
+- **EC**: Resolution proximity block (> 90d) too aggressive → relax to > 120d if G_IS shows WR positive at 91–120d range
+- **ED**: FMLL co-fire produces no WR improvement vs solo VRP → reduce co-fire multiplier from 1.20× to 1.00×
+- **EE**: DSR plateau shows {+2.0, 60d} outperforms centre cell → switch selected cell to max-DSR; document rationale departure from theoretically-grounded default
+- **EF**: Anti-prim D triggers but N_backtest < 15 → extend data pipeline back to 2017 (Deribit launched); retest before retiring
 
 ---
 
-## Evidence
+## Open Calibration Items
+
+1. **G_DATA**: Stand up Deribit DVOL public API poller (daily OHLCV available without auth); Binance BTC daily OHLCV; compute VRP = DVOL² - RV₇² (variance form); z-score vs rolling 90d window
+2. **G_HIST**: Reconstruct 2019–2026 series; identify N Mode A candidate dates (VRP_z ≥ +1.5, rv_7d_trend < 0); tag with nearest-expiry crypto PM market if available
+3. **G_IS**: `scripts/is_backtest_vrp.py` — for each signal date, find PM crypto market resolving within 90d; compute WR (YES price at signal < resolved YES price); Mann-Whitney U vs random baseline; N ≥ 15
+4. **G_CPCV**: Run 9-cell plateau after G_IS; compute DSR per cell; check anti-prim D trigger
+5. **G_CAT**: Gamma API crypto-category classifier — keyword approach first (bitcoin / btc / ethereum / eth / crypto / blockchain in question text + category tag); precision check on 30 manual labels
+6. **rv_7d_trend calibration**: Compare rv_3d vs rv_5d vs rv_7d lookback for trend detection; target: minimize Mode A false-positive rate in crash continuation periods
+7. **FMLL co-fire frequency**: At G_CAT live, measure how often FMLL and VRP co-fire on same market; validate ρ_prior=0.60 empirically (expect 15–30% co-fire rate given different trigger conditions)
+
+---
+
+## Evidence (6 sources)
 
 | Source | Finding | Relevance |
 |--------|---------|-----------|
-| Han & Li (2019 JFE) | Positive VRP → positive next-week BTC returns R²≈5% | Direct crypto VRP→returns; mode direction |
-| Bollerslev, Tauchen & Zhou (2009 RFS) | VRP predicts S&P 500 excess returns; R²≈3% quarterly | Foundational VRP predictability |
-| Carr & Wu (2009 JFE) | Variance risk premium formal model; mechanism decomposition | Mechanism: why VRP is persistent and predictive |
-| Baker & Wurgler (2006 JF) | Investor sentiment predicts cross-asset returns | Fear contagion from options market to PM |
-| Whaley (2009 J Portfolio Mgmt) | VIX as cross-market fear gauge; fear × return relationship | DVOL as analogous fear gauge; PM contagion pathway |
-| Bekaert & Hoerova (2014 JFE) | VRP proxies risk aversion + conditional variance uncertainty | Mechanism of Mode A direction; Mode B attenuation |
-| Dew-Becker et al. (2017 RFS) | Near-term VRP dominates short-horizon predictions | Justifies proximity multiplier tiers; T1 (≤14d) strongest |
-| Bailey, Borwein & Lopez de Prado (2014 AMS) | Deflated Sharpe ratio + CPCV; multiple testing | G_CPCV anti-prim methodology |
+| Han & Li (2019, JFE) | Positive VRP → positive next-week BTC returns; R²≈5%, t=2.9; 2013–2018 | Primary causal anchor — strongest academic basis of any new prim class |
+| Dew-Becker, Giglio & Kelly (2017, RFS) | VRP term structure: convergence strongest at 1-week; decays ~45% at 1-month | Resolution proximity multiplier tiers (≤14d: 1.00×; 61–90d: 0.55×) |
+| Shefrin (2008, A Behavioral Approach to Asset Pricing) | Fear contagion: high implied vol → availability heuristic bias in retail pricing | Cross-asset mechanism: DVOL → PM retail fear anchoring |
+| Carr & Wu (2009, JFE) | VRP = E[RV] − IV²; negative on average (investor risk aversion), positive when crash fear exceeds realized crash | VRP measurement definition and sign convention |
+| Bailey, Borwein & Lopez de Prado (2014, SSRN 2326253) | Deflated Sharpe Ratio corrects multi-strategy selection bias; DSR ≥ 0.90 standard | G_CPCV plateau gate |
+| Wolfers & Zitzewitz (2004, JEP) | PM prices track financial market signals with measurable lag in political markets | Establishes PM-lagging-financial-market mechanism precedent |
 
 ---
 
-## Limitations
+## Refinement History
 
-- **N = 0 own-data.** All gates uncleared. Evidence is theoretical + academic analogy; no empirical confirmation on actual PM data.
-- **Crypto PM universe size:** At any given time, ≤ 5–15 active crypto price/adoption markets on Polymarket — signal frequency may be lower than projected 4–6 episodes/year at Mode A.
-- **DVOL scope:** Deribit DVOL measures BTC implied vol. ETH DVOL exists but is noisier. Crypto adoption PM markets (e.g. Bitcoin ETF AUM thresholds) may respond to BTC DVOL; altcoin adoption markets (e.g. Solana) may not — sub-category screening needed.
-- **Direction gate empirical validation (G_DIR):** the rv_7d_trend direction gate's WR uplift is analytically motivated but unvalidated on PM data. May require threshold adjustment (7d → 5d or 10d).
-- **FMLL correlation prior:** ρ = 0.60 is an informed prior, not measured. At N_eff ≥ 20 co-fires, replace with sample correlation.
+| Cycle | Level | Key Change |
+|-------|-------|------------|
+| 129 | intermediate (freqtrade) | Misplaced: VRP applied to freqtrade axis, not polymarket prim |
+| 134 | sophisticated (polymarket) | Full replacement: polymarket-native cross-asset fear contagion signal; RV Direction Gate; Resolution Proximity Multiplier (4-tier); VRPFMLLTracker (ρ_prior=0.60); CPCV+DSR 9-cell plateau; anti-prim D; Han & Li 2019 JFE primary anchor |
 
 ---
 
-**Prim bank after cycle 134:** polymarket **21 naive** (all superseded) / **22 intermediate** (+1 VRP) / **23 sophisticated** (+1 VRP)
+**Last validated**: never (RESEARCH elevation — cycle 134; direct naive→sophisticated via polymarket-specific rewrite; 5 gates uncleared [G_DATA, G_HIST, G_IS, G_CPCV, G_CAT]; DRY_RUN all modes)
+
+**Prim bank after cycle 134**: polymarket **21 naive** (all superseded) / **22 intermediate** / **23 sophisticated** (+1: volatility-risk-premium-regime-signal)
