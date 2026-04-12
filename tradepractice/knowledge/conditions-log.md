@@ -1150,6 +1150,16 @@ Sources:
 - **Blocking for intermediate:** (1) Category-resolution database (Gamma API scrape, ≥ 8 category cells × ≥ 30 resolved markets, NLP tagger precision ≥ 0.85); (2) Rolling 24-month window calibration + cross-window correlation check (≥ 0.80); (3) Information vs. bias gate (GDELT velocity confound control); (4) IS backtest per category cell (Mann-Whitney U p < 0.10; ≥ 3 cells passing for signal validation)
 - **Prim bank after cycle 104:** 20 naive (20 superseded, 0 active) / 19 intermediate (1 active: low-friction-venue-lead) / 19 sophisticated (polymarket)
 
+## category-base-rate-neglect-fade (intermediate) — 2026-04-12 [cycle 110]
+- **Works when:** YES deviates ≥ 15 pp (Mode A: elections_US/foreign, geopolitical_conflict, judicial) OR ≥ 12 pp (Mode B: legislation, executive_action, crypto_regulation) from 24m-rolling cell base rate; cell eligible (≥ 30 resolved markets; δ_12m/24m < 8 pp; IS backtest passed p < 0.10 for that cell); liquidity ≥ $5k; bid-ask ≤ $0.05; resolution 14–90 days; YES ∈ [0.20, 0.80]; GDELT velocity ≤ skip threshold (Mode A ≤ 4×; Mode B ≤ 3×); NLP tagger confidence ≥ 0.75; ≥ 3 cells database-wide have passed IS backtest
+- **Fails when:** Category-resolution database not built — BLOCKING for any live use; cell has < 30 resolved markets or fails 12m/24m stability check; genuine information shock (GDELT skip threshold exceeded); FLB zone (YES < 0.10 or > 0.90 — defer to FLB prim); thin-liquidity adversarial selection (< $5k); market within 5 days of resolution; NLP tagger confidence < 0.75; IS backtest fails all cells (anti-prim B)
+- **Anti-prim A:** < 8 qualifying cells → entire signal inactive; **Anti-prim B:** 0 cells pass IS backtest p < 0.10 → retire signal; **Anti-prim C:** > 60% GDELT confound rate in rolling 90-day audit → 0.25× Kelly pending investigation
+- **GDELT confound scalar:** Mode A: 0.5× position if velocity 2–4× baseline; Mode B: 0.5× position if velocity 1.5–3× baseline
+- **Evidence:** 10 academic anchors (Kahneman & Lovallo 1993 MS, Kahneman & Tversky 1973 PsychRev, Flyvbjerg 2006 MS, Tetlock 2005, Wolfers & Zitzewitz 2004 JEP, Manski 2006 JFE, Della Vedova 2025 SSRN, Tetlock & Gardner 2015, Flyvbjerg et al. 2002 JAPA, Bailey et al. 2014 JPM). Zero own-data.
+- **Last validated:** never (RESEARCH elevation — cycle 110; two-mode rule; Gamma API database methodology specified; rolling window protocol; GDELT gate formalised; IS backtest spec; 3 anti-prim escape hatches; implementation skeleton written; NOT yet empirically backtested; database not yet built)
+- **Blocking for sophisticated:** (1) Build and validate Gamma API database (NLP tagger precision ≥ 0.85; ≥ 8 qualifying cells); (2) Run per-cell IS backtest (≥ 3 cells pass Mann-Whitney U p < 0.10); (3) Calibrate GDELT thresholds empirically from IS backtest sample; (4) Threshold plateau grid with DSR+CPCV; (5) Upgrade entry price proxy to volume-weighted average days 3–10
+- **Prim bank after cycle 110:** 20 naive (20 superseded, 0 active) / 20 intermediate (1 active: category-base-rate-neglect-fade) / 19 sophisticated (polymarket)
+
 ## realized-volatility-term-structure (intermediate → sophisticated) — 2026-04-12 [cycle 105]
 - **Status:** SUPERSEDED intermediate by sophisticated prim (cycle 105).
 
