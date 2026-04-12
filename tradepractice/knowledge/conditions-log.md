@@ -991,3 +991,25 @@ Sources:
 - **Pre-deployment gates:** Bybit API fetch + timestamp alignment; Bybit LSR definition verification; frequency scan n ≥ 20/year; CPCV before live
 - **Path to sophisticated:** own 3-year backtest (WR ≥ 52%, n ≥ 60, Sharpe ≥ 0.70 IS); 9-cell plateau + CPCV + DSR; empirical ρ(LSR, funding); ADX 30–40 boundary test; bear-regime amplify WR
 - **Last validated:** never (elevated naive → intermediate, cycle 84; regime gate + cross-exchange gate + dual-signal coordination added; 6 academic anchors; 3 anti-prim escape hatches; BLOCKING: frequency scan + Bybit API implementation + own backtest; N=0 own trades)
+
+## oi-price-divergence-signal (sophisticated) — 2026-04-12
+
+- **Elevated from:** intermediate (cycle 88), naive (cycle 78)
+- **Cycle:** 90 (RESEARCH — epistemic elevation; no code execution this cycle)
+- **Project:** freqtrade (11th regime axis: positioning exhaustion via OI rate-of-change vs price)
+- **New at sophisticated tier:**
+  - **CVD gate:** `cvd_10bar_net > 0` (Glosten-Milgrom H1 selection: buyers absorbing at price low vs new short initiation); expected +8–10pp WR from liquidity-sweep-reversal sophisticated precedent
+  - **ADX directionality tiered:** ADX < 30 (full); ADX 30–35 + falling (allow); ADX 30–35 + rising (suppress); ADX > 35 (hard block); based on Moskowitz-MOP trend-following premia model; resolves Limitation #5
+  - **Tier B dual-activation:** rapid AND moderate simultaneous → 1.5× size multiplier; backed by Bian et al. (2022) dual-phase cascade model (deeper exhaustion = larger position pool cleared); resolves Limitation #9
+  - **ETF AP contamination gate:** post-2024-01-11, Tier C only: `abs(oi_change_10bar) < 0.03` identifies smooth AP arbitrage OI signature; estimated 15–25% Tier C false-signal removal; resolves Limitation #4 at mechanism level
+  - **Quarterly rollover precision:** Binance exact quarterly expiry (last Friday of Q-end month) ± 48h via `/fapi/v1/exchangeInfo deliveryDate`; resolves Limitation #6
+  - **WR ladder formalised:** IS target WR ≥ 57%, Sharpe ≥ 1.20 (to survive McLean-Pontiff 25–50% OOS Sharpe degradation to live floor Sharpe ≥ 0.70); BSIC 47% crypto fee erosion applied
+  - **N_eff correlated derivatives framework:** ρ(OI,LSR)≈0.40; ρ(OI,funding)≈0.45; N_eff = N×0.84 for 2 concurrent; position size −15% penalty per concurrent derivatives prim
+  - **4 quantified anti-prim escape hatches:** (A) rolling 30-trade WR < 50% → SUSPEND; (B) frequency < 10/year Tier A+B combined → ANTI-PRIM; (C) ETF filter block rate > 40% → REVIEW; (D) CVD over-filter > 60% Tier A → REVIEW window length
+  - **Frequency theoretical estimate:** 40–65 signals/year BTC+ETH combined (Bian et al. cascade statistics); exceeds n≥60 target in 2-year IS window
+  - **12-source evidence basis** (+5 new: Glosten-Milgrom 1985; Moskowitz-Ooi-Pedersen 2012; Wilder 1978; BSIC 2020; BlackRock ETF SEC filings)
+- **8-gate deployment sequence:** G1 Coinglass archive → G2 data quality (< 5% gaps) → G3 IS backtest → G4 CPCV+DSR → G5 Tier B validation → G6 ETF filter calibration → G7 CVD gate validation → G8 paper trading (N=30)
+- **Certainty:** hypothesis (same ceiling as funding-rate-crowding-reversal sophisticated and lsr-contrarian sophisticated; no own-data backtest)
+- **BLOCKING:** G1 Coinglass 3-year OI archive + G2 data quality check + G3 IS backtest (WR ≥ 57%, Sharpe ≥ 1.20, n ≥ 60) + G4 48-cell CPCV+DSR plateau
+- **N:** 0 own trades
+- **Prim bank after cycle 90:** 11 naive / 16 intermediate / **17 sophisticated** (+1)
