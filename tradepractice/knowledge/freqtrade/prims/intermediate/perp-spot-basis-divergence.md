@@ -6,7 +6,7 @@ cycle: 94
 ---
 
 ## Prim: perp-spot-basis-divergence
-**Level:** intermediate
+**Level:** intermediate — **SUPERSEDED by sophisticated (cycle 145; initial elevation cycle 98)**
 **Project:** freqtrade
 **Parent:** perp-spot-basis-divergence (naive, cycle 92)
 
