@@ -19,15 +19,17 @@
 
 ## Freqtrade Conditions
 
-## btc-etf-institutional-flow (naive, cycle 133)
-- **Works when (amplify):** etf_flow_z > +1.5 (rolling 30d normalisation of net daily US BTC ETF flows). Mechanism: AP arbitrage creates forced spot buying. Most reliable when flow persists across 2+ consecutive days (institutional rebalancing program ongoing). Conservative modifier 1.08× reflects short data window.
-- **Works when (suppress):** etf_flow_z < −1.5. Mechanism: AP arbitrage creates forced spot selling. Asymmetric — GBTC structural outflows distort net calculation; exclude GBTC or weight down at intermediate tier.
-- **Fails when:** (F1) 24h data lag makes signal contemporaneous rather than leading — if price reacts same-day to AP buying, T+1 signal arrives after the move. (F2) Strong institutional momentum conflicts with MR prims (amplifying a counter-trend long during institutional buy wave). (F3) Short data window (27 months) limits IS validation. (F4) AUM scale change (must normalise by rolling AUM, not fixed dollar). (F5) Non-AP secondary market trades dilute mechanical signal. (F6) GBTC structural outflows mask genuine bearish redemptions.
-- **Best pairs:** BTC/USDT primary; ETH/USDT secondary (ETH spot ETFs launched Jul 2024, lower AUM).
-- **Best timeframe:** Meta-signal refreshed daily via bot_loop_start(); data available with ~24h lag. 5-day forward return window per Coval & Stafford 2007.
-- **Evidence:** 3 academic anchors (Ben-David/Franzoni/Moussawi 2012 JF; Coval/Stafford 2007 JF; Wermers 2000 JF). No own-data backtest. G1 lead/lag test BLOCKING.
-- **Deployment gates outstanding:** G_DATA (CoinGlass API key + Farside scraper verified); G1 (frequency scan + lead/lag test — T+1 predictive slope must be positive on next-1d BTC return; n ≥ 10 amplify events; ρ(etf_flow_z, axis7) < 0.70)
-- **Last validated:** cycle 133 (naive registered; analytical; no live data validation)
+## btc-etf-institutional-flow (intermediate, cycle 147)
+- **Works when (amplify):** flow_pct_z (AUM-normalised excl-GBTC, rolling 30d) > +1.5 AND RSI_4h ≥ 38. State machine: IMPULSE_STD (3d, 1.08×), IMPULSE_LARGE (5d, 1.12×), CLUSTER (last+2d, 1.10×). Mechanism: AP arbitrage forced spot buying; AUM normalisation makes signal scale-invariant across 2024–2026 AUM growth. T+1 data usable: Coval & Stafford multi-day drift profile places 60–65% of 5d price impact after T+0.
+- **Works when (suppress):** flow_pct_z < −1.5 AND RSI_4h ≤ 62 (suppress-MR; momentum prims exempt if RSI_4h > 62). State: SUPPRESS_STD (3d, 0.90×), SUPPRESS_LARGE (5d, 0.87×).
+- **Fails when:** (F1) Lead/lag null — G1_21A must confirm T+2 return slope positive (T+1 data). (F3) Short data window (< 27 months) — G1 event count borderline; AUM-normalised approach may improve frequency. (F5) Non-AP secondary market noise — persistent dilution; partially mitigated by AUM normalisation on high-z days.
+- **GBTC protocol:** Excluded. Tracked diagnostic. Reintroduce at 0.30× when gbtc_aum_30d < $2B.
+- **N_eff rules:** Axis 7 (ρ=0.35, Tier C): co-amplify → 1.12× cap; Axis 18 (ρ=0.20, Tier D): co-amplify → 1.14× cap; Axis 22 (ρ=0.55, Tier B): co-amplify → single-event (no compounding). Conflict (axis 21 AMPLIFY + axis 22 SUPPRESS) → both withheld, 1.00×.
+- **Best pairs:** BTC/USDT primary; ETH/USDT secondary (ETH ETFs ~15% AUM of BTC ETFs; apply 0.7× discount to modifier pending ETH-specific G1).
+- **Best timeframe:** Meta-signal refreshed daily via bot_loop_start(); 5-day forward return window; RSI gate uses 4h timeframe.
+- **Evidence:** 6 academic anchors (Ben-David/Franzoni/Moussawi 2012 JF; Coval/Stafford 2007 JF; Wermers 2000 JF; Chordia/Roll/Subrahmanyam 2002 JF; De Long/Shleifer/Summers/Waldmann 1990 JPE; McLean/Pontiff 2016 JF). No own-data backtest.
+- **Deployment gates outstanding:** G_DATA_21 (CoinGlass API with per-product AUM); G1_21A (frequency + lead/lag scan, n≥10 amplify, T+2 slope > 0, p < 0.20); G1_21B (GBTC exclusion validation); all axes independence checks ρ < 0.70.
+- **Last validated:** cycle 147 (naive → intermediate; analytical elevation; no live data validation)
 
 ## volatility-risk-premium-regime-signal (sophisticated, cycle 129)
 - **Works when (amplify):** VRP_z > +1.5σ (rolling 90d) **AND** rv_7d_trend < 0 (RV declining from spike peak — post-crash recovery). Direction gate is mandatory — without it, amplify fires into continuing crashes. put_skew > +3% (Mode B) confirms put-fear mechanism → 1.12×/1.15×/1.20× MR modifier. put_skew ≤ +3% → unconfirmed amplify at 1.08×. Analytically confirmed ~4.6 direction-gated signals/year (6.1 raw × 0.75 direction-filter).
