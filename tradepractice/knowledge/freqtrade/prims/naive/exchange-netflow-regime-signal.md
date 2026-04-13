@@ -8,9 +8,15 @@ project: freqtrade
 level: naive
 axis: 23rd regime axis
 signal-class: on-chain supply dynamics / selling intent proxy (meta-signal — no standalone entries)
+superseded_by: intermediate (cycle 154)
 ---
 
-# Exchange Netflow Regime Signal (Naive)
+# Exchange Netflow Regime Signal (Naive) — SUPERSEDED by Intermediate (cycle 154)
+
+> See [intermediate prim](../../intermediate/exchange-netflow-regime-signal.md) for current specification.
+> Three structural upgrades: two-mode architecture (Mode A spike / Mode B trend / Mode AB co-fire),
+> asymmetric duration gate (30d SUPPRESS cap / 20d AMPLIFY cap), formalised N_eff co-occurrence rules.
+> Analytical G1 pre-confirmation added from Ante 2023 FRL and Havidán & Baur 2021 JAI.
 
 ## Rationale for New Axis
 
