@@ -19,17 +19,24 @@
 
 ## Freqtrade Conditions
 
-## btc-etf-institutional-flow (intermediate, cycle 147)
+## btc-etf-institutional-flow (intermediate, cycle 147) — SUPERSEDED by sophisticated cycle 149
 - **Works when (amplify):** flow_pct_z (AUM-normalised excl-GBTC, rolling 30d) > +1.5 AND RSI_4h ≥ 38. State machine: IMPULSE_STD (3d, 1.08×), IMPULSE_LARGE (5d, 1.12×), CLUSTER (last+2d, 1.10×). Mechanism: AP arbitrage forced spot buying; AUM normalisation makes signal scale-invariant across 2024–2026 AUM growth. T+1 data usable: Coval & Stafford multi-day drift profile places 60–65% of 5d price impact after T+0.
-- **Works when (suppress):** flow_pct_z < −1.5 AND RSI_4h ≤ 62 (suppress-MR; momentum prims exempt if RSI_4h > 62). State: SUPPRESS_STD (3d, 0.90×), SUPPRESS_LARGE (5d, 0.87×).
-- **Fails when:** (F1) Lead/lag null — G1_21A must confirm T+2 return slope positive (T+1 data). (F3) Short data window (< 27 months) — G1 event count borderline; AUM-normalised approach may improve frequency. (F5) Non-AP secondary market noise — persistent dilution; partially mitigated by AUM normalisation on high-z days.
-- **GBTC protocol:** Excluded. Tracked diagnostic. Reintroduce at 0.30× when gbtc_aum_30d < $2B.
-- **N_eff rules:** Axis 7 (ρ=0.35, Tier C): co-amplify → 1.12× cap; Axis 18 (ρ=0.20, Tier D): co-amplify → 1.14× cap; Axis 22 (ρ=0.55, Tier B): co-amplify → single-event (no compounding). Conflict (axis 21 AMPLIFY + axis 22 SUPPRESS) → both withheld, 1.00×.
-- **Best pairs:** BTC/USDT primary; ETH/USDT secondary (ETH ETFs ~15% AUM of BTC ETFs; apply 0.7× discount to modifier pending ETH-specific G1).
-- **Best timeframe:** Meta-signal refreshed daily via bot_loop_start(); 5-day forward return window; RSI gate uses 4h timeframe.
-- **Evidence:** 6 academic anchors (Ben-David/Franzoni/Moussawi 2012 JF; Coval/Stafford 2007 JF; Wermers 2000 JF; Chordia/Roll/Subrahmanyam 2002 JF; De Long/Shleifer/Summers/Waldmann 1990 JPE; McLean/Pontiff 2016 JF). No own-data backtest.
-- **Deployment gates outstanding:** G_DATA_21 (CoinGlass API with per-product AUM); G1_21A (frequency + lead/lag scan, n≥10 amplify, T+2 slope > 0, p < 0.20); G1_21B (GBTC exclusion validation); all axes independence checks ρ < 0.70.
-- **Last validated:** cycle 147 (naive → intermediate; analytical elevation; no live data validation)
+- **Superseded:** See sophisticated (cycle 149) entry below.
+
+## btc-etf-institutional-flow (sophisticated, cycle 149)
+- **Works when (amplify):** flow_pct_z (AUM-normalised excl-GBTC, rolling 30d) > +1.5 AND RSI_4h ≥ 38. Decay schedule: IMPULSE_STD [1.08→1.06→1.04] days 1/2/3; IMPULSE_LARGE [1.12→1.09→1.06→1.04→1.02] days 1–5; CLUSTER_ACTIVE 1.10× (no decay while cluster runs; each new cluster day resets to 1.10×), CLUSTER_TAIL [1.07, 1.04]. Mechanism: AP arbitrage forced spot buying (Ben-David 2012 JF); multi-day cumulative drift with Coval-Stafford decay profile (A7 Frazzini-Lamont 2008 JFE calibration); institutional herding momentum (Wermers 2000 JF). ETH co-fire bonus: +0.04× when eth_flow_pct_z > +1.5 simultaneously (cap 1.16×).
+- **Works when (suppress):** flow_pct_z < −1.5 AND RSI_4h ≤ 62 (MR prims; momentum prims exempt above 62). Decay: SUPPRESS_STD [0.90→0.92→0.95]; SUPPRESS_LARGE [0.87→0.89→0.91→0.93→0.96]. No co-fire compounding for suppress direction.
+- **Fails when:** (F3) Short data window (27 months BTC; 21 months ETH) — sub-period stability gate in G2 is the critical test. (F5) Non-AP secondary market noise — partially mitigated by high threshold + ETH co-fire filter. (F7) RESOLVED at sophisticated: flat modifier replaced by decay schedule. (F8) Coordinated risk-off redemptions — suppress logic correct (co-fire bonus is amplify-only).
+- **ETH co-fire layer:** co-fire (BTC+ETH both > +1.5σ same day) → +0.04× bonus. ETH-only echo → 1.04× when BTC neutral. Gate: G1_ETH_21 (n_co_fire ≥ 6; co-fire 5d WR delta ≥ +1pp; July 2024–Apr 2026 data). Anti-prim E: drop ETH layer if gate fails.
+- **GBTC protocol:** Excluded. Diagnostic tracking. Conditional reintroduction at gbtc_aum_30d < $2B at 0.30×.
+- **N_eff rules:** Axis 7 (ρ=0.35, Tier C, co-amplify → 1.12× cap); Axis 18 (ρ=0.20, Tier D, compound → 1.14× cap); Axis 22 (ρ=0.55, Tier B, single-event only). Conflict (axis 21 AMPLIFY + axis 22 SUPPRESS) → both withheld. Three-axis 21+7+18: N_eff=1.95, cap 1.15×.
+- **G2 IS targets:** IS Sharpe ≥ 0.90 raw; DSR ≥ 0.65 deflated (25-cell plateau); WR ≥ 55% amplify (MR prims) / ≥ 52% (trend prims); sub-period stability DSR ≥ 0.40 per sub-period.
+- **Best pairs:** BTC/USDT primary. ETH/USDT at 0.70× modifier discount.
+- **Best timeframe:** Daily meta-signal via bot_loop_start(); RSI gate uses 4h; 5-day forward return window.
+- **Evidence:** 8 academic anchors (Ben-David 2012 JF; Coval/Stafford 2007 JF; Wermers 2000 JF; Chordia 2002 JF; De Long 1990 JPE; McLean/Pontiff 2016 JF; Frazzini/Lamont 2008 JFE; Barberis/Shleifer/Wurgler 2005 JFE). No own-data backtest.
+- **Deployment gates outstanding:** G_DATA_21 → G1_21A → G1_21B → G1_ETH_21 → G2_IS_TEST.
+- **Kelly α:** 0.12 pending G2; revert to 0.10 if DSR < 0.65 or ETH layer dropped.
+- **Last validated:** cycle 149 (intermediate → sophisticated; analytical elevation; decay schedule + ETH co-fire + CPCV/DSR protocol added; no live data validation)
 
 ## volatility-risk-premium-regime-signal (sophisticated, cycle 129)
 - **Works when (amplify):** VRP_z > +1.5σ (rolling 90d) **AND** rv_7d_trend < 0 (RV declining from spike peak — post-crash recovery). Direction gate is mandatory — without it, amplify fires into continuing crashes. put_skew > +3% (Mode B) confirms put-fear mechanism → 1.12×/1.15×/1.20× MR modifier. put_skew ≤ +3% → unconfirmed amplify at 1.08×. Analytically confirmed ~4.6 direction-gated signals/year (6.1 raw × 0.75 direction-filter).
