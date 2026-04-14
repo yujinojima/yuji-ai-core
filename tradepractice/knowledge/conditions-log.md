@@ -1769,4 +1769,23 @@ Sources:
 - **What remains for sophisticated:** (1) Weekend stratification (Admati-Pfleiderer 1988); (2) Multi-source composite (F&G 60% + Santiment z 25% + Google Trends 15%); (3) McLean-Pontiff 2016 post-2018 subsample decay check; (4) 36-cell CPCV+DSR (3 thresholds × 3 holds × 4 splits); (5) Empirical N_eff ρ matrix.
 - **Gate sequence:** G_DATA_27A CLEARED → G1_27A (F&G<15 frequency ≥4/year) → G1_27B (WR≥55% next-14d after F&G<15, n≥15) → G1_27C (F&G>85 frequency ≥3/year) → G1_27D (Mode B n≥15 co-occurrence) → INDEP_27 (all ρ<0.60) → G2_27 (36-cell CPCV+DSR) → LIVE. First barrier: G1_27A (script: analysis/g1-social-sentiment-fg-scan.py; cheap — uses already-cleared free API).
 - **Last validated:** never (RESEARCH creation — cycle 168; 27th freqtrade regime axis; first behavioral sentiment signal class; fills retail herding gap absent from all 26 prior axes; 7 academic anchors; G_DATA_27A the only cleared gate; DRY_RUN)
+
+---
+
+## intraday-session-asymmetry-regime (naive, cycle 172) — axis 28
+
+- **Works when (NY session, weekdays):** utc_hour ∈ [13, 21) AND weekday ∈ [Mon–Fri] → AMPLIFY 1.08× sister prim signals. Mechanism: Admati-Pfleiderer (1988) informed trader clustering; Eross et al. (2019) BTC positive drift concentrated 13:00–21:00 UTC; NY+London overlap = peak institutional participation = highest price discovery quality → momentum and mean-reversion signals more reliable.
+- **Works when (London session, weekdays):** utc_hour ∈ [8, 13) AND weekday ∈ [Mon–Fri] → NEUTRAL 1.00× (no modification). European institutional initiation zone; neither amplified nor suppressed at naive tier.
+- **Works when (Asian + dead zone, weekdays):** utc_hour ∈ [0, 8) OR utc_hour ∈ [21, 24) AND weekday ∈ [Mon–Fri] → REDUCE 0.92× sister prim signals. Mechanism: retail-dominated, thin liquidity; noise-to-signal ratio elevated; momentum signals generate more false positives per Eross et al. (2019).
+- **Weekends:** utc_hour irrelevant → NEUTRAL 1.00×; no session amplification (US institutional desks closed; retail-only regardless of UTC hour; session mechanism absent).
+- **Fails when (naive escape hatch A):** Rolling 30-day WR differential between NY entries and Asian entries < 3pp on same signal type → session asymmetry absent in current regime; deactivate until re-test.
+- **Naive gaps (not yet captured):** (1) DST shifts ±1h twice/year invalidate fixed UTC cutoffs; (2) No trend-regime interaction (ADX>30 trending markets may invert session effect); (3) Uniform scalar across all signal types (RSI, VWAP, CVD likely differ); (4) No pair-specific tuning (ETH vs BTC institutional participation profiles differ); (5) Day-of-week effect not captured (Monday premium +0.04% per Caporale & Plastun 2019).
+- **Data source:** G_DATA_28 = UTC system clock — **CLEARED**. No external data dependency.
+- **Gate sequence:** G_DATA_28 CLEARED → G1_28A (NY vs Asian entry ratio ≥ 2:1 on momentum signals) → G1_28B (WR differential NY vs Asian ≥ +4pp, n≥30/session) → G1_28C (weekend null test: same WR regardless of hour) → INDEP_28 (ρ with axis 27 < 0.40) → G2_28 (3 scalar levels × 3 UTC boundary variants, CPCV) → LIVE. First barrier: G1_28A (no external data — runs on historical OHLCV klines timestamps).
+- **Evidence (5 anchors):** Eross/Farooq/Treepongkaruna 2019 FRL (BTC intraday seasonality; positive drift 08:00–21:00 UTC; Asian session negative or zero); Caporale/Plastun 2019 FRL (day-of-week effect in crypto; Monday +0.04%; calendar effects p<0.05); Liu/Tsyvinski 2021 RFS (investor attention = session-correlated; 26% annualized momentum alpha; attention drives returns); Admati/Pfleiderer 1988 RFS (informed trader clustering theory; price discovery temporally concentrated); Brauneis/Mestel/Riordan/Theissen 2022 FRL (crypto efficiency degrades outside peak institutional hours; noise-to-signal session-dependent).
+- **Kelly α:** 0.00 (meta-signal — no standalone entries; modifies sister prim conviction only).
+- **Best pairs:** BTC/USDT primary; ETH/USDT at 0.90× discount pending ETH-specific session profile validation.
+- **Best timeframe:** 1h strategy entries; session_scalar_28 refreshed hourly via bot_loop_start().
+- **Correlation with existing axes (analytical):** ρ(28, 27) expected < 0.25 (session is orthogonal to sentiment state — extreme fear occurs at any hour); ρ(28, 26 CVD) TBD (CVD is intraday but session-agnostic); ρ(28, 25 OBI) TBD. INDEP_28 scan required before multi-axis live use.
+- **Last validated:** never (RESEARCH creation — cycle 172; 28th freqtrade regime axis; first temporal meta-signal; G_DATA_28 the only cleared gate; DRY_RUN)
 - **Prim bank after cycle 168:** freqtrade 23 naive / **29 intermediate** (+1: social-sentiment-narrative-momentum axis 27) / 31 sophisticated (unchanged)
