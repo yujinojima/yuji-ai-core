@@ -240,6 +240,48 @@ G2_29 IS backtest must stratify across three structurally distinct periods:
 
 ---
 
+## G1 Empirical Results (cycle 185, 2026-04-14)
+
+Script: `analysis/g1-cross-pair-correlation-scan.py`
+Data: BTC/ETH/SOL/BNB 4h Binance | 2022-01-31 → 2026-04-08 (4.10 years)
+
+```
+rho_avg (30d rolling, 6 pairs): mean=0.7496  std=0.0878  min=0.4972  max=0.9070
+
+Regime Distribution
+  HIGH_CORR    4882   54.3%
+  NORMAL       4111   45.7%
+  LOW_CORR        0    0.0%   ← rho_avg never breached 0.40 in dataset
+
+G1_29A  NORMAL WR > HIGH_CORR WR (ETH fwd-4h)  [FAIL]
+  WR HIGH_CORR:  0.5057  n=4882
+  WR NORMAL:     0.5033  n=4111
+  Delta (lag):   −0.0025  (threshold ≥ +0.0100)  WRONG DIRECTION
+  Mann-Whitney p: 0.4469  (threshold < 0.10)
+
+G1_29B  ≥ 4 HIGH/LOW episodes/year  [PASS]
+  Transitions: 39  |  episodes/year: 9.51  ≥ 4 ✓
+
+G1_29C  ρ(axis29, axis5_BBW) < 0.70  [PASS]
+  ρ = 0.0016  — near-zero independence confirmed ✓
+
+G1_29D  LOW_CORR ETH uplift ≥ 0.5pp  [FAIL — AP_D triggered]
+  n_low = 0  — no LOW_CORR bars in dataset; AP_D fires
+
+OVERALL G1: FAIL  (G1_29A + G1_29D both fail)
+```
+
+**Structural findings:**
+1. **No LOW_CORR regime exists** in 2022–2026 data (min rho_avg = 0.497 > 0.40 threshold). The ETF-era market has been persistently correlated. AP_E mechanism hypothesis supported at data level.
+2. **G1_29A reversed** — HIGH_CORR has marginally *higher* WR at 4h horizon (50.57% vs 50.33%). Effect is absent or reversed at 4h forward; mechanism may require longer horizon (24h/48h) or the suppress effect only materialises during acute HIGH_CORR entries, not in aggregate.
+3. **G1_29C confirms axis independence** — ρ=0.0016 means rho_avg is structurally orthogonal to BTC BBW. Axis 29 is measuring something distinct from axis 5. AP_C does not fire.
+
+**Anti-prim fires (from G1):**
+- **AP_D active** — Mode B (LOW_CORR amplify) → 1.00× neutral; no LOW_CORR regime to amplify
+- **AP_B candidate** — G1_29A delta wrong direction; Mode A (HIGH_CORR suppress) formally unconfirmed
+
+---
+
 ## Deployment Gates
 
 ```
@@ -247,17 +289,18 @@ G_DATA_29   BTC/ETH/SOL/BNB OHLCV 4h, Binance public REST — CLEARED
 
 G1_29A      HIGH_CORR ETH WR delta ≥ 1.0pp vs NORMAL (Mann-Whitney p < 0.10)
             n ≥ 20 HIGH_CORR bars; resolved by g1-cross-pair-correlation-scan.py
-            Status: ANALYTICALLY PRE-CONFIRMED (empirical UNCLEARED)
+            Status: EMPIRICAL FAIL — delta=−0.0025 (wrong direction); p=0.4469
+            AP_B candidate: investigate longer horizons (24h/48h) before retiring Mode A
 
 G1_29B      ≥ 4 HIGH_CORR episodes/year (rho_avg ≥ 0.75, ≥ 2-bar persistence, 7-day separation)
-            Status: ANALYTICALLY PRE-CONFIRMED (empirical UNCLEARED)
+            Status: EMPIRICAL PASS — 9.51 episodes/year ✓
 
 G1_29C      ρ(axis29 regime signal, axis5 BBW) < 0.70 (independence gate)
-            Status: UNCLEARED (AP_C fires if ρ ≥ 0.70 → merge into axis 5)
+            Status: EMPIRICAL PASS — ρ=0.0016 ✓
 
 G1_29D      LOW_CORR ETH WR uplift ≥ 0.5pp vs NORMAL (Mann-Whitney p < 0.10)
             n ≥ 20 LOW_CORR bars; same script run
-            Status: UNCLEARED (AP_D fires if fails → Mode B → 1.00× neutral)
+            Status: EMPIRICAL FAIL — n_low=0; AP_D active → Mode B = 1.00× neutral
 
 H1_DCC      DCC-GARCH regime match ≥ 85% vs rolling Pearson (BTC/ETH 2021–2026)
             Status: UNCLEARED (fail → retain Pearson, threshold 0.78; informational)
@@ -350,14 +393,14 @@ Documents that correlation-based signals exhibit higher real-world implementatio
 
 ## Next Cycle Recommendations
 
-**(A) IMPLEMENT (first barrier) — G1_29A scan:**
-Run `analysis/g1-cross-pair-correlation-scan.py` on BTC/ETH/SOL/BNB 4h OHLCV (Binance public REST). Single execution resolves all 4 G1 gates (G1_29A/B/C/D). Expected runtime < 3 minutes. Gate outcomes:
-- G1_29A PASS → Mode A confirmed → proceed to G1_29C/D
-- G1_29C FAIL (ρ ≥ 0.70) → AP_C: retire axis 29; merge rho_avg as axis 5 auxiliary gate
-- G1_29D FAIL → AP_D: Mode B → 1.00× neutral; retain Mode A only
+**(A) ANALYSE — G1_29A horizon extension:**
+G1_29A fails at 4h forward. Run the scan at 24h (horizon=6 bars) and 48h (horizon=12 bars) to test whether the suppress effect materialises over a longer window. If effect appears at 24h+ but not 4h, update signal to use 24h forward WR metric; re-run G1_29A. This is the most likely salvage path before AP_B retirement.
 
-**(B) IMPLEMENT — H1_DCC validation:**
-After G1 clearance: compute DCC-GARCH ρ_t via arch library on same dataset. Compare DCC vs Pearson regime classifications bar-by-bar. If ≥ 85% agreement → retain Pearson for production; if < 75% → upgrade to DCC. Informational — does not block deployment.
+**(B) ANALYSE — threshold recalibration (post-ETF market structure):**
+rho_avg mean = 0.7496 over 4.1 years. The post-ETF market is structurally HIGH_CORR. Consider lowering HIGH_CORR threshold to 0.65–0.68 (median-based split) to create more regime differentiation. Re-run G1_29A with adjusted threshold. AP_F (duration recalibration) is also relevant given the persistent HIGH_CORR dominance.
 
-**(C) IMPLEMENT — G2_29 CPCV+DSR plateau:**
-18-cell grid with sub-period stability stratification. Run after G1 clearance and H1 decision. BLOCKING gate. Target: Mode A WR delta ≥ 1.0pp ETH; DSR ≥ 0.45 centre cell; ≥ 0.35 per sub-period.
+**(C) IMPLEMENT — H1_DCC validation (informational):**
+Compute DCC-GARCH ρ_t via arch library on same dataset. Compare DCC vs Pearson regime classifications bar-by-bar. Informational — does not unblock G1_29A failure.
+
+**(D) BLOCKED — G2_29 CPCV+DSR plateau:**
+G2 is blocked until G1_29A is resolved (pass or mechanism revised). Current status: both Mode A and Mode B empirically unconfirmed; AP_D active.
