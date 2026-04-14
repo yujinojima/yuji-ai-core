@@ -1,74 +1,96 @@
 ---
 from: analyst
 subject: analyst-result
-timestamp: 2026-04-14T15:49:55+10:00
-cycle: 172
-superseded_by: intermediate (cycle 174)
----
-
-> **SUPERSEDED** — Elevated to intermediate (cycle 174). See
-> `knowledge/freqtrade/prims/intermediate/intraday-session-asymmetry-regime.md`
-> for the current definition. This file is retained for historical reference only.
-
+timestamp: 2026-04-14T16:20:29+10:00
+cycle: 174
 ---
 
 ---
 
-**Cycle 172 — RESEARCH — Complete**
+```
+from: analyst
+subject: analyst-result
+timestamp: 2026-04-14T17:30:00+10:00
+cycle: 174
+```
+
+---
+
+**Cycle 174 — RESEARCH — Complete**
 
 ---
 
 ## Prim: intraday-session-asymmetry-regime
-**Level:** naive (new) | **Axis:** 28 | **Project:** freqtrade | **Commit:** `69c5549`
+**Level:** naive → **intermediate** | **Axis:** 28 | **Project:** freqtrade | **Commit:** `47d56f3`
 
 ---
 
 ### What was produced
 
-**Naive Rule — Session Filter:**
+**Intermediate Rule — Session Scalar (DST-aware, prim-class-routed):**
+
 ```
-NY session     (utc_hour 13–21, weekday) → AMPLIFY 1.08×
-London session (utc_hour  8–13, weekday) → NEUTRAL 1.00×
-Asian + dead   (utc_hour  0–8, 21–24)   → REDUCE  0.92×
-Weekends                                 → NEUTRAL 1.00×
+session_deviation:   OVERLAP +0.10× | NY +0.08× | LONDON 0.00× | ASIAN/DEAD −0.08× | WEEKEND 0.00×
+prim-class weight:   Class A (MR) → 1.00× | Class B (momentum) → ADX-scaled 0.85/0.50/0.25×
+DOW multiplier:      Monday 1.025× | Friday 0.975× | Tue–Thu 1.000×
+pair discount:       BTC 1.00× | ETH 0.90× | other 0.75×
 ```
 
-Meta-signal only — no standalone entries. Broadcast via `bot_loop_start()` as `session_scalar_28`.
+**Five advances over naive (cycle 172):**
 
-**Why axis 28:** All 27 prior axes treat time as homogeneous. Signal reliability is structurally different across sessions because agent composition changes. At 02:00 UTC (Asian retail, thin book) the same RSI divergence setup has meaningfully different edge properties than at 15:00 UTC (London–NY overlap, peak institutional flow). This is the first temporal regime signal in the freqtrade bank.
-
-**Data dependency:** G_DATA_28 = UTC system clock — **CLEARED immediately**. Zero external data barrier. The first gate (G1_28A: NY vs Asian WR differential on momentum signals) can be run against any existing historical OHLCV dataset.
+| # | Advance | Mechanism |
+|---|---------|-----------|
+| 1 | DST-aware classification via `zoneinfo` | Fixed ±1h misclassification for ~180d/year (US/EU clock shifts) |
+| 2 | OVERLAP as distinct sub-session 1.10× | London + NY desks simultaneously active = double institutional clustering (Admati-Pfleiderer 1988) |
+| 3 | ADX prim-class routing | In strong trends (ADX>35), momentum prims receive 0.25× weight → converge to 1.00× (trend dominates session) |
+| 4 | Day-of-week modulation | Monday premium +2.5% on deviation; Friday reduction −2.5% (Caporale/Plastun 2019; Aharon/Qadan 2019) |
+| 5 | Pair discount | ETH 0.90×; other 0.75× (BTC has strongest institutional session identity) |
 
 ---
 
-### Evidence — 5 Sources
+### New academic anchors at intermediate (2 additions)
 
 | Source | Finding |
 |--------|---------|
-| **Eross/Farooq/Treepongkaruna (2019 FRL)** | BTC significant intraday seasonality; positive hourly drift concentrated 08:00–21:00 UTC; Asian session ≈ 0 or negative |
-| **Caporale & Plastun (2019 FRL)** | Day-of-week effects in crypto confirmed; Monday premium +0.04%; p<0.05 across 2013–2018 |
-| **Liu & Tsyvinski (2021 RFS)** | Investor attention = session-correlated; 26% annualized crypto momentum alpha driven by attention peaks during US hours |
-| **Admati & Pfleiderer (1988 RFS)** | Theoretical foundation: informed traders cluster in high-liquidity windows; price discovery temporally concentrated |
-| **Brauneis et al. (2022 FRL)** | Crypto efficiency measurably degrades outside institutional sessions; noise-to-signal is session-dependent |
+| **Aharon & Qadan (2019, Finance Research Letters)** | BTC GARCH-M 2013–2018: Monday premium + negative Friday drift both p<0.10. Independent DOW confirmation beyond Caporale/Plastun. |
+| **Heston, Korajczyk & Sadka (2010, Journal of Finance)** | Institutional volume clusters at session opens. Overlapping sessions (London + NY simultaneously) create double-peak pattern — mechanistic ground for OVERLAP 1.10× scalar. |
 
 ---
 
-### Naive Gaps (what's left for intermediate elevation)
+### Gate status after cycle 174
 
-1. DST-aware UTC boundary calculation (US/Europe clock shifts ±1h twice/year)
-2. Trend-regime interaction (ADX > 30 may invert session effect direction)
-3. Day-of-week modulation (Monday premium, Friday selling not yet captured)
-4. Per-signal-type scalar tuning (RSI, CVD, VWAP likely have different session sensitivities)
-5. Pair-specific session profile (ETH institutional participation differs from BTC)
+```
+G_DATA_28 / G_DATA_28B / G_DATA_28C  ← ALL CLEARED (UTC clock + ADX + OHLCV)
+G1_28A  NY+OVERLAP vs ASIAN WR Δ≥+2pp   ← FIRST BARRIER (OHLCV only; no API key)
+G1_28B  Monday vs Tue–Thu Δ≥+0.5pp      ← runs on same G1_28A dataset
+G1_28C  OVERLAP WR ≥ NY WR confirmed    ← runs on same G1_28A dataset
+INDEP_28  all ρ<0.30 empirical          ← analytical (not blocking)
+G2_28   24-cell CPCV+DSR                ← blocking; requires G1 first
+```
+
+G1_28A is the **cheapest gate in the entire freqtrade bank**: pure OHLCV, no API key, no external service. Script to create: `analysis/g1-session-asymmetry-scan.py`.
 
 ---
 
-### Bank State After Cycle 172
+### Bank state after cycle 174
 
-| Tier | Freqtrade | Note |
-|------|-----------|------|
-| Naive | **24** (+1) | axis 28 added |
-| Intermediate | 27 | unchanged |
+| Tier | Freqtrade | Delta |
+|------|-----------|-------|
+| Naive | **23** | −1 (axis 28 elevated) |
+| Intermediate | **31** | +1 (axis 28 added) |
 | Sophisticated | 32 | unchanged |
 
 **28 freqtrade regime axes defined.**
+
+---
+
+### Next cycle recommendations
+
+**(A) IMPLEMENT (highest priority) — G1_28A session WR scan:**
+Create `analysis/g1-session-asymmetry-scan.py`. Pull BTC/USDT 1h OHLCV 2020–2024 (already available locally or from Binance public REST). Label each bar via `classify_session()`. Compute next-4h log return per session label. Mann-Whitney U test (NY+OVERLAP vs ASIAN). Target: WR Δ ≥ +2pp, p<0.10. G1_28B and G1_28C run on the same dataset at zero additional cost.
+
+**(B) RESEARCH — sophisticated elevation path:**
+Five items remain for sophisticated elevation (documented in prim file): G1 empirical confirmation, ETH pair-specific IS calibration, OVERLAP sub-window split (OVERLAP_OPEN vs OVERLAP_CLOSE), per-signal-type IS calibration (Class A split by signal type), and seasonal macro-regime stability test.
+
+**(C) RESEARCH — new freqtrade axis 29:**
+With 31 intermediate and 32 sophisticated, the naive tier is now thin at 23. Consider whether any structural gap remains in the 28-axis regime coverage. Candidates: liquidity depth stratification (bid-ask spread regime — not captured by OBI or CVD), or a cross-exchange basis arbitrage signal distinct from axis 13 (perp-spot basis).
