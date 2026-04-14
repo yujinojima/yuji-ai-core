@@ -3,11 +3,13 @@ from: analyst
 subject: analyst-result
 timestamp: 2026-04-14T13:06:43+10:00
 cycle: 169
+superseded_by: sophisticated (cycle 173)
 ---
 
 ---
 
 **Cycle 168 — RESEARCH — Complete**
+**SUPERSEDED by sophisticated (cycle 173)**
 
 ---
 
