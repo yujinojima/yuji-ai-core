@@ -1872,3 +1872,29 @@ Sources:
 - **Deployment gates outstanding:** G_DATA_DISPUTE (Etherscan DVM contract events + uma.xyz dispute board scrape — P(dispute|ambiguous,near-50,DTE≤10) and P(NO|dispute) by category) → G1_DISPUTE_A (P(NO|dispute) ≥ 0.55 at N≥30; anti-prim A if fails) → G1_DISPUTE_B (P(dispute|keywords+near-50+DTE≤10) ≥ 2× unconditional base rate) → G1_DISPUTE_C (category stratification — identify Mode A/B/X) → LLM ambiguity scorer validation → G2_IS (CPCV+DSR at intermediate). First barrier: G_DATA_DISPUTE.
 - **Last validated:** never (RESEARCH creation — cycle 178; 27th polymarket signal class; 23rd naive prim; first oracle-mechanic prim pre-resolution; G_DATA_DISPUTE fully pending; DRY_RUN)
 - **Prim bank after cycle 178:** freqtrade 25 naive / 30 intermediate / 33 sophisticated (unchanged). Polymarket **23 naive** (+1: oracle-dispute-prediction-signal created) / 22 intermediate (unchanged) / 26 sophisticated (unchanged). **27 polymarket signal axes defined.**
+
+## anchor-event-recency-bias-fade (sophisticated, cycle 179) — polymarket domain
+- **Works when (Mode A — natural disaster):**
+    - GDELT article_count ≥ P90 of 180d rolling category baseline (natural disaster) AND count > 2× rolling mean (genuine spike, not elevated baseline)
+    - AND NLP cosine(anchor_event_description, target_market_question) ≥ 0.72 using all-MiniLM-L6-v2 (≥ 0.80 if thin category < 20 events/180d)
+    - AND target YES ∈ [0.15, 0.50] AND resolution > 14d
+    - AND geographic distance anchor ↔ target > 500km
+    - AND NOAA hazard at target location < MODERATE AND USGS M at target location < 4.5
+    - → BUY NO; 10d hold; stoploss YES + 15pp; α = 0.10 × SAM × kelly_deflation
+- **Works when (Mode B — political violence):**
+    - Same GDELT (P87 baseline) and NLP gates
+    - AND target YES ∈ [0.15, 0.55] AND resolution > 21d
+    - AND ACLED delta < +20% AND distinct primary_actor AND conflict_system_id
+    - → BUY NO at 0.75× size; 7d hold; stoploss YES + 15pp; α = 0.08 × SAM × kelly_deflation
+- **SAM (salience asymmetry multiplier):** SAM = bounded geometric_mean(rarity, severity) ∈ [0.85, 1.15]. Standard event (20/year, 500 casualties) SAM ≈ 0.96. Rare catastrophe (2/year, 10k+ casualties) SAM ≈ 1.10. Once-per-decade, 50k+ casualties → SAM = 1.15 cap.
+- **N_eff concurrent event deflation:** ≥ 2 qualifying anchor events in same category within 14d → kelly_deflation = N_eff/N where N_eff = N/(1+(N-1)×0.75). N=2: 0.571. N=3: 0.400. Hard cap: max 3 concurrent same-category positions.
+- **Fails when (F1):** Anchor event conveys real information about target location/entity (geographic/actor separation gates failed at boundary 500–1,000km; apply 0.75× size in this zone).
+- **Fails when (F2):** Salience reactivates during hold window (GDELT anchor > 75th pct during hold → extend window 3d + tighten stoploss to YES + 8pp; if reactivation > P90 → exit).
+- **Fails when (F5):** Resolution event fires during hold window (Mode A: NOAA/USGS flags rise at target; Mode B: ACLED new incident; hard stoploss YES + 15pp).
+- **Fails when (F8):** GDELT baseline inflated (count does not exceed 2× rolling mean → not a genuine spike, only elevated period).
+- **Best markets:** Polymarket natural disaster ("Will earthquake M6.5+ hit [country] in 2024?") and political violence ("Will armed conflict escalate in [country]?") categories, 4–12 weeks to resolution.
+- **Best anchor events:** Rare catastrophes (SAM > 1.08), single geographic location, well-separated from target.
+- **Evidence:** 8 academic anchors. G1 analytically pre-confirmed (n=20–34 qualifying events over 2yr IS). G2 WR 60–70% (Mode A) / 55–65% (Mode B) analytically expected from Kunreuther et al. 1978 overpricing magnitude + Eisensee-Strömberg 2007 decay timing. Zero own-data trades.
+- **Deployment gates outstanding:** G_DATA_GDELT → G_NLP (installable now: all-MiniLM-L6-v2, run precision eval on 20 pairs) → G1_A_FREQUENCY → G1_B_PM_MATCH → G2_IS_WR (CPCV+DSR event-based, 2023–2024) → G3_PAPER_TRADE → LIVE.
+- **Last validated:** never (RESEARCH elevation — cycle 179; intermediate → sophisticated; all 4 intermediate gaps resolved analytically; 4 new academic anchors; full SAM + N_eff + NLP + GDELT percentile implementations; no live data validation; all deployment gates UNCLEARED)
+- **Prim bank after cycle 179:** freqtrade 25 naive / **31 intermediate** (conductor count; includes 3 polymarket-domain files in freqtrade dir) / **34 sophisticated** (+1: anchor-event-recency-bias-fade elevated). Polymarket bank unchanged.
