@@ -1898,3 +1898,29 @@ Sources:
 - **Deployment gates outstanding:** G_DATA_GDELT → G_NLP (installable now: all-MiniLM-L6-v2, run precision eval on 20 pairs) → G1_A_FREQUENCY → G1_B_PM_MATCH → G2_IS_WR (CPCV+DSR event-based, 2023–2024) → G3_PAPER_TRADE → LIVE.
 - **Last validated:** never (RESEARCH elevation — cycle 179; intermediate → sophisticated; all 4 intermediate gaps resolved analytically; 4 new academic anchors; full SAM + N_eff + NLP + GDELT percentile implementations; no live data validation; all deployment gates UNCLEARED)
 - **Prim bank after cycle 179:** freqtrade 25 naive / **31 intermediate** (conductor count; includes 3 polymarket-domain files in freqtrade dir) / **34 sophisticated** (+1: anchor-event-recency-bias-fade elevated). Polymarket bank unchanged.
+
+## oracle-dispute-prediction-signal (intermediate, cycle 180) — polymarket domain
+- **Works when (Mode A — regulatory / economic indicators):**
+    - Description contains ≥1 ambiguity keyword (pre-filter) AND LLM ambiguity score ≥ 0.65 (zero-shot scorer)
+    - AND no objective resolution source present (per bloomberg / per reuters / per coingecko / as reported by / etc.)
+    - AND YES ∈ [0.42, 0.58]; DTE 2–10; no active dispute; liquidity ≥ $5k; bid-ask spread ≤ $0.05
+    - AND category ∈ {regulatory_compliance, economic_indicator, corporate_governance}
+    - → BUY NO; 10d max hold; α = 0.10
+- **Works when (Mode B — geopolitical / social governance):**
+    - All Mode A gates + LLM score ≥ 0.72 (higher precision) + YES ∈ [0.43, 0.57] + DTE 3–8
+    - AND category ∈ {geopolitical, social_governance, international_relations}
+    - → BUY NO at 0.70× size; 7d max hold; α = 0.07
+- **Mode X (excluded):** elections / political_actor_outcomes / country_leader_change / party_vote_share → NO SIGNAL (UMA voter political priors override null-default NO-bias assumption)
+- **Exit (both modes):** DTE reaches 1 (close before settlement); dispute filed (HOLD through UMA vote — target event); YES > 0.65 (stop); max hold reached.
+- **Two-path EV structure (analytically derived):**
+    - Path 1 (no dispute): WR ≈ 50% — no edge from this path alone
+    - Path 2 (dispute occurs, UMA votes NO): WR = 100% — this path generates signal edge
+    - Combined Mode A WR ≈ 0.90 × 0.50 + 0.10 × 0.60 = 0.51 (thin edge; P_dispute ≈ 0.10, P(NO|dispute) ≈ 0.60)
+    - Edge improves with: higher LLM_score → higher P_dispute; YES framing lift → NO side benefits
+- **Game-theoretic P(NO|dispute) grounding:** UMA DVM slashing mechanics → uncertain token voters defect to null-default (asserter's affirmative YES claim unproven when description lacks objective source; null-default = NO). Direction is mechanism-justified without requiring empirical data; magnitude (≥ 0.55 Mode A) requires G_DATA_UMA validation.
+- **N_eff with resolution-confirmation-arbitrage:** ρ ≈ 0.05 (non-overlapping: oracle-dispute fires pre-resolution; RCA fires post-assertion). No compounding required.
+- **Fails when:** Objective resolution source present (overrides all ambiguity); elections category (Mode X); YES outside boundary; market already in active dispute (different risk profile — defer to RCA); LLM score below threshold; continuous-measure market (no binary dispute incentive).
+- **Evidence:** 5 new academic anchors: Pistor & Xu (2003 Oxford JLET — regulatory incompleteness → Mode A category support); Myerson & Satterthwaite (1983 JET — efficient dispute at near-50 price under asymmetric information); Hermalin & Katz (2009 RAND — optimal incomplete contracts → ambiguous language is structural); Cramton & Schwartz (1991 JLEO — strategic delay → DTE 2–10 filing window); Sunstein (2005 U. Chicago Law Review — regulatory vagueness → Mode A category prevalence). Zero own-data.
+- **Deployment gates outstanding:** G_LLM (≥50 historical PM markets; validate dispute-rate uplift ≥ 1.5× for LLM_score ≥ 0.65 vs < 0.30) → G_DATA_UMA (Etherscan DVM + uma.xyz scrape; P(dispute|conditions) and P(NO|dispute) by Mode A/B category) → G2_IS (CPCV+DSR at intermediate). Anti-prim: if P(NO|dispute) < 0.55 across all non-election categories after G_DATA_UMA → retire directional thesis.
+- **Last validated:** never (RESEARCH elevation — cycle 180; naive → intermediate; Mode A/B/X structure added; game-theoretic P(NO|dispute) derivation; LLM scoring replaces keyword match; two-path EV decomposition; 5 new academic anchors; all deployment gates UNCLEARED; DRY_RUN)
+- **Prim bank after cycle 180:** freqtrade 25 naive / 31 intermediate / 34 sophisticated (unchanged). Polymarket 23 naive / **24 intermediate** (+1: oracle-dispute-prediction-signal elevated) / 26 sophisticated (unchanged).
