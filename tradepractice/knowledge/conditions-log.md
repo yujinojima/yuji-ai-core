@@ -19,6 +19,17 @@
 
 ## Freqtrade Conditions
 
+## cvd-executed-flow-imbalance (intermediate, cycle 164) — axis 26
+- **Works when (AMPLIFY, Mode A):** cvd_z > +1.5 for ≥2 consecutive 1h bars; vol_gate active (total_vol > 0.5 × vol_SMA_30d); ADX_1h < 20 (ranging) → 1.066× modifier; ADX 20–25 (transition) → 1.06×; ADX > 25 (trending) → discounted to ~1.048×. Mechanism: Kyle (1985) informed taker aggression; Cont 2014 OFI p<0.01 predictive result. Analytical pre-confirmation: ~20–25 distinct episodes/year; WR ≥ 53% projected (equity baseline 58–62% minus 15–20pp crypto discount).
+- **Works when (AMPLIFY, Mode B):** cvd_z > +1.0 for ≥5 consecutive 1h bars; vol_gate active; ADX-neutral modifier 1.05×. Mechanism: Easley VPIN sustained imbalance (patient informed accumulation); Bouchaud autocorrelated flow drift. ~10 distinct episodes/year estimated.
+- **Works when (SUPPRESS):** cvd_z < −1.5 (Mode A, 0.93×) or < −1.0 (Mode B, 0.94×) or Mode AB (0.91×). Aggressive sellers dominating; sister prim long entries discounted.
+- **Fails when:** G_DATA_26 unavailable (first barrier — klines field[9] confirm required); wash trading (mitigated by 2-bar confirmation); trending regime + Mode A spike (trend-following noise — ADX discount 0.80× applied); low-volume periods (vol_gate removes bottom-quartile bars); ρ(CVD_z, axis 24 OBI_z) ≥ 0.55 → AP3 merger with axis 24.
+- **Best pair(s):** BTC/USDT perpetual primary; ETH/USDT at 0.90× discount pending independent ETH CVD G1 scan.
+- **Best timeframe:** 1h bars (taker_buy_base_asset_volume from klines); z-score over 90-bar rolling window.
+- **Evidence:** 5 academic anchors: Cont/Kukanov/Stoikov 2014 QF (65% OFI R², p<0.01 predictive, PRIMARY), Kyle 1985 Econ (informed taker mechanism), Easley/de Prado/O'Hara 2012 JF (VPIN, 95-min lead, 30 markets), Hendershott/Jones/Menkveld 2011 JF (Granger causality confirmed), Bouchaud/Gefen/Potters/Wyart 2004 QF (flow autocorrelation + power-law decay). No own-data backtest.
+- **Deployment gates outstanding:** G_DATA_26 → G1_26A → G1_26B → G1_26C → G1_26D → INDEP_26 → G2_IS_TEST.
+- **Last validated:** cycle 164 (new prim created at intermediate; analytical pre-confirmation from Cont 2014 + Easley 2012; no live data validation)
+
 ## btc-etf-institutional-flow (intermediate, cycle 147) — SUPERSEDED by sophisticated cycle 149
 - **Works when (amplify):** flow_pct_z (AUM-normalised excl-GBTC, rolling 30d) > +1.5 AND RSI_4h ≥ 38. State machine: IMPULSE_STD (3d, 1.08×), IMPULSE_LARGE (5d, 1.12×), CLUSTER (last+2d, 1.10×). Mechanism: AP arbitrage forced spot buying; AUM normalisation makes signal scale-invariant across 2024–2026 AUM growth. T+1 data usable: Coval & Stafford multi-day drift profile places 60–65% of 5d price impact after T+0.
 - **Superseded:** See sophisticated (cycle 149) entry below.
