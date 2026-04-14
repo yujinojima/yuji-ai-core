@@ -391,15 +391,54 @@ G2_28:   IS backtest CPCV+DSR
          Status: BLOCKING (requires G1_28A/B/C first)
 ```
 
-**Gate status summary:**
+**Gate status summary (updated cycle 175 — G1 empirical results):**
 ```
 G_DATA_28 / G_DATA_28B / G_DATA_28C  ← ALL CLEARED (zero external data dependency)
-G1_28A (session WR differential)     ← FIRST BARRIER — requires OHLCV only; no API key
-G1_28B (DOW WR differential)         ← runs on same dataset as G1_28A
-G1_28C (OVERLAP vs NY confirmation)  ← runs on same dataset as G1_28A
+G1_28A (session WR differential)     ← FAIL  Δ=+0.50pp (need ≥+2pp), p=0.21 (need <0.10)
+G1_28B (DOW WR differential)         ← PASS  Monday Δ=+1.06pp vs Tue–Thu, p=0.0075
+G1_28C (OVERLAP vs NY confirmation)  ← FAIL  OVERLAP WR=49.84% < NY WR=53.19% (Δ=−3.35pp)
 INDEP_28                              ← analytical (not blocking)
-G2_28 (IS CPCV+DSR)                  ← blocking; requires G1 clearance first
+G2_28 (IS CPCV+DSR)                  ← BLOCKED (requires G1 clearance; G1_28A/C failing)
 ```
+
+**AP_A ACTIVE** — G1_28A failed (Δ < 2pp). Per anti-prim routing, revert session_deviation
+magnitudes to ±0.04× (naive magnitude, halved from intermediate) until G2 CPCV provides
+direct confirmation. DOW multipliers retained (G1_28B PASS).
+
+**Empirical session WR order (BTC/USDT 1h, 2022-01-01 → 2026-04-09, n=37,428 bars):**
+```
+NY:       53.19%  n=5,480   ← STRONGEST (contradicts OVERLAP > NY assumption)
+ASIAN:    51.40%  n=8,293
+WEEKEND:  50.80%  n=10,704
+OVERLAP:  49.84%  n=3,423   ← WEAKER than ASIAN (contradicts Admati-Pfleiderer mechanism)
+DEAD:     49.91%  n=2,929
+LONDON:   48.28%  n=6,595   ← WEAKEST
+```
+
+**Key contradiction:** The intermediate prim assigned OVERLAP=+0.10× > NY=+0.08× based on
+the double-institutional-clustering mechanism (Admati-Pfleiderer 1988; Heston et al. 2010).
+Empirically, OVERLAP underperforms ASIAN by −1.56pp and NY by −3.35pp on next-4h WR.
+Possible explanations for analyst:
+1. London-close sell-pressure during OVERLAP window dominates the NY-open buying
+2. The double-institutional-clustering theory applies to equity markets (Heston 2010 data) but
+   crypto OVERLAP is dominated by cross-desk hedging and ETF rebalancing → net-negative for
+   directional positioning
+3. Data period (2022-2026) is post-Luna, post-FTX — institutional participation profile may
+   differ from the 2013–2020 era studied in the academic anchors
+
+**Revised AP_A scalar (active until G2):**
+```python
+SESSION_DEVIATION_AP_A = {   # ±0.04× magnitude (half of intermediate)
+    "OVERLAP":  +0.04,   # reduced from +0.10 (G1_28C fail: empirically underperforms NY)
+    "NY":       +0.04,   # confirmed dominant session; retains positive sign
+    "LONDON":    0.00,   # unchanged
+    "ASIAN":    -0.04,   # reduced from -0.08 (G1_28A fail: differential too small)
+    "DEAD":     -0.04,   # reduced from -0.08
+    "WEEKEND":   0.00,   # unchanged
+}
+```
+
+**Script:** `analysis/g1-session-asymmetry-scan.py` (created cycle 175)
 
 ---
 
