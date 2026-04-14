@@ -1842,3 +1842,23 @@ Sources:
 - **Implementation:** CorrRegimeState class (naive: rho_avg rolling 180-bar; 6 pairwise Pearson; corr_scalar_29_{btc,eth,alt} + neff_floor_29; bot_loop_start() 4h refresh; DRY_RUN pending G1_29A).
 - **Last validated:** never (RESEARCH creation — cycle 175; 29th freqtrade regime axis; first cross-pair synchronization signal; first dynamic N_eff mechanism; G_DATA_29 cleared; G1 empirical pending; script TBD; DRY_RUN)
 - **Prim bank after cycle 175:** freqtrade **25 naive** (+1: axis 29 created) / 31 intermediate (unchanged) / 32 sophisticated (unchanged). **29 freqtrade regime axes defined.**
+
+## intraday-session-asymmetry-regime (sophisticated — freqtrade axis 28) — 2026-04-14 [cycle 177]
+- **Elevated:** intermediate (cycle 174) → sophisticated (cycle 177). Supersedes AP_A scalar-halving regime (active since cycle 175).
+- **Hypothesis restructure:** OLD: ACTIVE > PASSIVE (OVERLAP > NY > LONDON > ASIAN). NEW: NY PRIMARY > LONDON DRAG. Empirical session WR ordering from G1 scan (cycle 175, n=37,428, 2022–2026): NY(53.19%) > ASIAN(51.40%) > WEEKEND(50.80%) > DEAD(49.91%) > OVERLAP(49.84%) > LONDON(48.28%). Admati-Pfleiderer double-clustering theory misapplied to OVERLAP: AP 1988 models single-session opening clustering; OVERLAP is a London-CLOSE + NY-OPEN collision → London mandatory EOD liquidation dominates.
+- **Scalar corrections (all 6 labels updated):**
+  - OVERLAP: +0.10× (intermediate) → split OVERLAP_EARLY −0.02× / OVERLAP_LATE −0.06× (London-close sequential selling; sign inverted)
+  - ASIAN: −0.08× (intermediate; wrong sign) → +0.02× (empirical WR=51.40% > 50%)
+  - LONDON: 0.00× (intermediate; neutral) → −0.06× (empirical WR=48.28%; weakest session)
+  - DEAD: −0.08× (intermediate) → −0.02× (empirical WR=49.91% ≈ neutral)
+  - NY: +0.08× (retained; confirmed strongest)
+  - WEEKEND: 0.00× (retained; neutral)
+- **OVERLAP split mechanism:** OVERLAP_LATE = 15:00+ London local (UTC 14–16 in summer; 15–17 in winter). London closing hours trigger mandatory position squaring → structural net selling. OVERLAP_EARLY = first 2h of OVERLAP; NY-open buying partially offsets pre-close dynamics. Anchored in Chordia/Roll/Subrahmanyam 2001 (order imbalance at close → price pressure) and Andersen/Bollerslev 1998 (FX London-close = risk-reduction flow, not information flow).
+- **AP_A status:** RETIRED. AP_A was triggered by G1_28A failure (Δ=+0.50pp under OVERLAP>NY hypothesis). Under restructured hypothesis (NY vs LONDON), G1_28A retroactively passes. Scalars restored to full sophisticated magnitude.
+- **Gate updates:** G1_28A CLEARED (NY−LONDON Δ=+4.91pp >> +2pp; n=12,075; p<<0.01). G1_28B retained CLEARED (Monday Δ=+1.06pp, p=0.0075). G1_28C_v2 UNCLEARED (new: OVERLAP_LATE < OVERLAP_EARLY sub-split confirmation). G1_28D UNCLEARED (new: sub-period stability 2022/2023/2024+ — McLean-Pontiff decay guard; ALL 3 sub-periods must show NY > LONDON ≥ +2pp; BLOCKING for G2_28).
+- **G2_28:** BLOCKED pending G1_28C_v2 + G1_28D. 24-cell CPCV+DSR grid unchanged (4 scalar variants × 3 DOW variants × 2 prim-class splits). DSR: Bailey-Borwein-Lopez de Prado SSRN 2326253.
+- **Script update required:** analysis/g1-session-asymmetry-scan.py → update to 7-label classify_session() + add OVERLAP sub-split analysis (G1_28C_v2) + sub-period partitioning (G1_28D).
+- **DOW module:** Retained unchanged (G1_28B PASS). Monday 1.025×, Friday 0.975×. AP_C still active if Monday Δ drops below 0.5pp.
+- **New academic anchors (3):** A8: Chordia/Roll/Subrahmanyam 2001 JFE (order imbalance at close → price pressure; London-close OVERLAP_LATE mechanism). A9: Andersen/Bollerslev 1998 JF (FX intraday patterns; London-close = risk-reduction flow, not clustering; OVERLAP_LATE suppression grounded in FX analogy). A10: McLean/Pontiff 2016 JF (anomaly decay post-publication; sub-period stability gate G1_28D anchor).
+- **Last validated:** RESEARCH elevation — cycle 177; 10 advances over intermediate; hypothesis restructure + 6 scalar sign/magnitude corrections + OVERLAP split + AP_A retired + 2 new gates; DRY_RUN pending G1_28C_v2/G1_28D.
+- **Prim bank after cycle 177:** freqtrade 25 naive (unchanged) / **30 intermediate** (−1: axis 28 elevated) / **33 sophisticated** (+1: axis 28 added). 29 freqtrade regime axes defined.
