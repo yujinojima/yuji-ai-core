@@ -1790,6 +1790,23 @@ Sources:
 - **Last validated:** never (RESEARCH creation — cycle 172; 28th freqtrade regime axis; first temporal meta-signal; G_DATA_28 the only cleared gate; DRY_RUN)
 - **Prim bank after cycle 172:** freqtrade 23 naive / 27 intermediate / 32 sophisticated (unchanged from cycle 170)
 
+## intraday-session-asymmetry-regime (intermediate, cycle 174) — axis 28 — SUPERSEDES naive (cycle 172)
+- **Works when (OVERLAP session, Class A MR prims):** classify_session(utc_dt) == "OVERLAP" AND weekday ∈ Mon–Fri → session_scalar_28_mr = 1.10× (London + NY desks both active; double institutional clustering per Admati-Pfleiderer 1988; highest liquidity density of any session window). DOW modifier: Monday 1.025× on deviation → ~1.1025× capped at 1.12×.
+- **Works when (NY session, Class A MR prims):** classify_session == "NY" AND weekday ∈ Mon–Fri → session_scalar_28_mr = 1.08× (retained from naive; single-session institutional flow). Monday DOW → 1.082×; Friday DOW → 0.922× (DEAD or ASIAN can go below NY).
+- **Works when (LONDON session):** classify_session == "LONDON" → session_scalar_28_mr = 1.00× (neutral; London-only pre-NY opening; Eross et al. 2019 finds UK institutional flow insufficient to lift above NY level).
+- **Works when (ASIAN + DEAD, Class A):** session_deviation = −0.08 → session_scalar_28_mr = 0.92× (Friday DEAD → 0.922× close to floor 0.88×; ETH Friday DEAD → 0.93×). Mechanism: retail-dominated low-liquidity; Brauneis 2022 efficiency degradation.
+- **Works when (momentum prims, Class B):** Same session labels but scalar scaled by ADX: ADX < 25 → 0.85× session_deviation weight; ADX 25–35 → 0.50×; ADX > 35 → 0.25× (strong trend dominates session composition; Class B scalar converges to 1.00× in strong trends). Class B hard caps: 0.92–1.10×.
+- **Works when (weekends):** session_deviation = 0.00 regardless of UTC hour → both scalars = 1.00× neutral.
+- **Fails when (FM1):** `zoneinfo` unavailable → DST misclassification ±1h for ~180d/year; deploy tzdata package or accept ±1h error band with logged warning + 0.50× scalar weight.
+- **Fails when (FM5):** DOW effect below detection threshold in 2020–2024 data (AP_C: G1_28B WR Monday vs Tue–Thu Δ < 0.5pp) → remove DOW multiplier module, set all DOW to 1.00×.
+- **Best pair(s):** BTC/USDT perpetual primary (1.00× pair discount). ETH/USDT at 0.90× pair discount. Other perpetuals 0.75×.
+- **Best timeframe:** 1h bar classification; session_scalar_28_mr and session_scalar_28_mom both refreshed via bot_loop_start() on every bar open using `zoneinfo` DST-aware classification.
+- **Evidence (7 anchors):** Eross/Farooq/Treepongkaruna 2019 FRL (BTC intraday seasonality; A1); Caporale/Plastun 2019 FRL (DOW Monday premium; A2); Liu/Tsyvinski 2021 RFS (attention peaks in US session; A3); Admati/Pfleiderer 1988 RFS (institutional clustering; OVERLAP mechanism; A4); Brauneis et al. 2022 FRL (efficiency degrades outside sessions; A5); Aharon/Qadan 2019 FRL (BTC Monday + Friday DOW; A6); Heston/Korajczyk/Sadka 2010 JF (institutional session volume clustering; A7 — OVERLAP advance).
+- **Deployment gates outstanding:** G_DATA_28/28B/28C ALL CLEARED → G1_28A (NY+OVERLAP vs ASIAN WR differential ≥ +2pp; p<0.10; script: analysis/g1-session-asymmetry-scan.py) → G1_28B (Monday vs Tue–Thu WR Δ ≥ +0.5pp) → G1_28C (OVERLAP WR ≥ NY WR; n≥20/year) → INDEP_28 (all ρ < 0.30) → G2_28 (24-cell CPCV+DSR; IS Sharpe ≥ 0.70; DSR ≥ 0.50) → LIVE.
+- **Anti-prim gates:** AP_A (G1_28A WR Δ < 2pp → revert naive); AP_B (NY WR < 50% MR → invert scalars); AP_C (G1_28B Monday Δ < 0.5pp → remove DOW module); AP_D (ρ ETH vs BTC < 0.70 → lower ETH to 0.75×).
+- **Last validated:** never (RESEARCH elevation — cycle 174; naive axis 28 → intermediate; 5 advances: DST-aware classification, OVERLAP sub-session 1.10×, ADX prim-class routing, DOW multiplier, pair discount; G_DATA all cleared; all G1 empirical gates pending; first barrier G1_28A no external API required; DRY_RUN)
+- **Prim bank after cycle 174:** freqtrade **23 naive** (−1: axis 28 elevated) / **31 intermediate** (+1: axis 28 added) / 32 sophisticated (unchanged)
+
 ---
 
 ## social-sentiment-narrative-momentum (intermediate — polymarket axis 27) — 2026-04-14 [cycle 169] — SUPERSEDED by sophisticated (cycle 173)
