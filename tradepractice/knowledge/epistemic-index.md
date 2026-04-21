@@ -7,7 +7,7 @@
 > **Core principle**: Patterns are agent-driven situations, not visual chart shapes.
 > Edge comes from modelling agent behaviour and mistakes, not detecting patterns.
 >
-> **Bank state (cycle 188):** freqtrade **26 naive / 33 intermediate / 35 sophisticated** — 30 regime axes. Polymarket 23 naive / 24 intermediate / 26 sophisticated — 27 signal classes.
+> **Bank state (cycle 194):** freqtrade **27 naive / 34 intermediate / 37 sophisticated** — 31 regime axes. Polymarket 23 naive / 24 intermediate / 26 sophisticated — 27 signal classes.
 
 ## Framework
 
