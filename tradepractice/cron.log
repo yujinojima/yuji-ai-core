@@ -1686,3 +1686,59 @@ Skipping this run.
 
 [2026-04-21 18:10:01] SKIP: tradepractice actively running
 [2026-04-21 18:21:00] BACKTEST: YujiFluidStrategy 2025-01-01→2026-01-01 | Trades:21 WR:66.7% Profit:-5.39% (mkt:-9.20%) DD:7.78% Sharpe:-0.27 | A37 in prod, no new findings
+[2026-04-21 19:10:01] LAUNCH: starting smart tradepractice (window 19:10)
+╔══════════════════════════════════════════════╗
+║     SMART TRADEPRACTICE                       ║
+║     Budget-aware, adaptive cycles             ║
+╚══════════════════════════════════════════════╝
+
+  Budget: $20.94 / $30.00 (69%)
+  Stop at: 70%
+  Cycles this window: 160
+  Window resets in: 179 min
+
+  Cost model (from recent runs):
+    opus_analyst: ~$2.84 (6 samples)
+    sonnet_analyst: ~$0.0 (257 samples)
+    sonnet_implementer: ~$0.32 (263 samples)
+
+  Will run cycles until budget reaches 70%
+  Current: 69%
+  Decision: stop
+
+╔══════════════════════════════════════════════╗
+║  SMART LOOP LAUNCHED                         ║
+╚══════════════════════════════════════════════╝
+
+  View:    tmux attach -t tradepractice
+  Stop:    ./stop.sh
+  Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
+
+[2026-04-21 20:10:01] LAUNCH: starting smart tradepractice (window 20:10)
+╔══════════════════════════════════════════════╗
+║     SMART TRADEPRACTICE                       ║
+║     Budget-aware, adaptive cycles             ║
+╚══════════════════════════════════════════════╝
+
+  Budget: $0.00 / $30.00 (0%)
+  Stop at: 70%
+  Cycles this window: 0
+  Window resets in: 300 min
+
+  Cost model (from recent runs):
+    opus_analyst: ~$2.84 (6 samples)
+    sonnet_analyst: ~$0.0 (257 samples)
+    sonnet_implementer: ~$0.32 (263 samples)
+
+  Will run cycles until budget reaches 70%
+  Current: 0%
+  Decision: run opus
+
+╔══════════════════════════════════════════════╗
+║  SMART LOOP LAUNCHED                         ║
+╚══════════════════════════════════════════════╝
+
+  View:    tmux attach -t tradepractice
+  Stop:    ./stop.sh
+  Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
+
