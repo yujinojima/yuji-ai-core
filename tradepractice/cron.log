@@ -1685,3 +1685,4 @@ Skipping this run.
   Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
 
 [2026-04-21 18:10:01] SKIP: tradepractice actively running
+[2026-04-21 18:21:00] BACKTEST: YujiFluidStrategy 2025-01-01→2026-01-01 | Trades:21 WR:66.7% Profit:-5.39% (mkt:-9.20%) DD:7.78% Sharpe:-0.27 | A37 in prod, no new findings
