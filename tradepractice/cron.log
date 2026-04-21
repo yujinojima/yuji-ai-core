@@ -1514,3 +1514,59 @@ Skipping this run.
   Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
 
 [2026-04-15 01:10:01] SKIP: tradepractice actively running
+[2026-04-15 02:10:01] LAUNCH: starting smart tradepractice (window 02:10)
+╔══════════════════════════════════════════════╗
+║     SMART TRADEPRACTICE                       ║
+║     Budget-aware, adaptive cycles             ║
+╚══════════════════════════════════════════════╝
+
+  Budget: $19.07 / $30.00 (63%)
+  Stop at: 70%
+  Cycles this window: 10
+  Window resets in: 180 min
+
+  Cost model (from recent runs):
+    opus_analyst: ~$2.84 (6 samples)
+    sonnet_analyst: ~$2.93 (167 samples)
+    sonnet_implementer: ~$0.52 (174 samples)
+
+  Will run cycles until budget reaches 70%
+  Current: 63%
+  Decision: stop
+
+╔══════════════════════════════════════════════╗
+║  SMART LOOP LAUNCHED                         ║
+╚══════════════════════════════════════════════╝
+
+  View:    tmux attach -t tradepractice
+  Stop:    ./stop.sh
+  Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
+
+[2026-04-21 11:10:01] LAUNCH: starting smart tradepractice (window 11:10)
+╔══════════════════════════════════════════════╗
+║     SMART TRADEPRACTICE                       ║
+║     Budget-aware, adaptive cycles             ║
+╚══════════════════════════════════════════════╝
+
+  Budget: $0.00 / $30.00 (0%)
+  Stop at: 70%
+  Cycles this window: 0
+  Window resets in: 300 min
+
+  Cost model (from recent runs):
+    opus_analyst: ~$2.84 (6 samples)
+    sonnet_analyst: ~$2.93 (167 samples)
+    sonnet_implementer: ~$0.52 (174 samples)
+
+  Will run cycles until budget reaches 70%
+  Current: 0%
+  Decision: run opus
+
+╔══════════════════════════════════════════════╗
+║  SMART LOOP LAUNCHED                         ║
+╚══════════════════════════════════════════════╝
+
+  View:    tmux attach -t tradepractice
+  Stop:    ./stop.sh
+  Budget:  cat /home/yuji/Desktop/Yuji Project/ai-core/tradepractice/state/budget.json
+
