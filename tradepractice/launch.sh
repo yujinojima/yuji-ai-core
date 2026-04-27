@@ -15,7 +15,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/config.sh"
 source "$SCRIPT_DIR/lib/queue.sh"
 
-SESSION_NAME="tradepractice"
+SESSION_NAME="${SESSION_NAME_OVERRIDE:-tradepractice}"
 DRY_RUN=false
 
 for arg in "$@"; do
@@ -97,7 +97,10 @@ export MAX_CYCLES CLAUDE_BIN MODEL_ANALYST MODEL_IMPLEMENTER
 
 # Create tmux session
 # Quote paths for spaces in "Yuji Project"
-CONDUCTOR_CMD="bash \"$SCRIPT_DIR/agents/conductor.sh\"; echo '--- CONDUCTOR EXITED ---'; read"
+# 2026-04-26: kill the session when the conductor exits so worker panes don't
+# keep polling and burn tokens on stale queue items (post-conductor orphan bug).
+# Mirrors smart-launch.sh. Workers exit naturally when their tmux panes die.
+CONDUCTOR_CMD="bash \"$SCRIPT_DIR/agents/conductor.sh\"; echo '--- CONDUCTOR EXITED ---'; sleep 8; tmux kill-session -t \"$SESSION_NAME\""
 ANALYST_CMD="bash \"$SCRIPT_DIR/agents/worker.sh\" analyst $MODEL_ANALYST; echo '--- ANALYST EXITED ---'; read"
 IMPLEMENTER_CMD="bash \"$SCRIPT_DIR/agents/worker.sh\" implementer $MODEL_IMPLEMENTER; echo '--- IMPLEMENTER EXITED ---'; read"
 

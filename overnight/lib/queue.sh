@@ -50,9 +50,32 @@ dequeue() {
   echo "$oldest"
 }
 
-# Read and remove the oldest message
+# Read and remove the oldest message.
+# Optional 2nd arg: expected_sender — when set, drains any messages from other
+# senders (logged as "drain") and returns the oldest matching one. Without it,
+# behaviour is unchanged (FIFO across all senders).
+# Added 2026-04-26 to fix queue cross-contamination in tradepractice/conductor.sh.
 consume() {
   local agent="$1"
+  local expected_sender="${2:-}"
+
+  if [ -n "$expected_sender" ]; then
+    local msg wrong_sender
+    for msg in $(ls -1tr "$INBOX_DIR/$agent"/*.md 2>/dev/null); do
+      if grep -q "^from: $expected_sender\$" "$msg" 2>/dev/null; then
+        cat "$msg"
+        rm -f "$msg"
+        return 0
+      fi
+      # Wrong sender — drain it so it can't poison the next cycle.
+      wrong_sender="$(grep '^from:' "$msg" 2>/dev/null | head -1 | awk '{print $2}')"
+      log_event "$agent" "drain" "discarded stale msg from ${wrong_sender:-unknown} (expected $expected_sender)"
+      rm -f "$msg"
+    done
+    return 1
+  fi
+
+  # Original behaviour (no source filter).
   local msg
   msg="$(dequeue "$agent")"
   if [ -n "$msg" ] && [ -f "$msg" ]; then
@@ -108,17 +131,32 @@ stop_loop() {
 }
 
 # Wait for a message in an agent's inbox (blocking with timeout)
-# Usage: wait_for_message <agent> [timeout_seconds]
+# Usage: wait_for_message <agent> [timeout_seconds] [expected_sender]
+# Added 2026-04-26: when expected_sender is set, only counts messages from that
+# sender as "arrived" (matches the new consume() filter). Without it, original
+# any-sender behaviour. Backward-compatible with overnight.
 wait_for_message() {
   local agent="$1"
   local timeout="${2:-300}"
+  local expected_sender="${3:-}"
   local elapsed=0
 
-  while ! has_messages "$agent" && is_running; do
+  while is_running; do
+    if [ -n "$expected_sender" ]; then
+      # Check if there's a message from the expected sender specifically.
+      local msg
+      for msg in $(ls -1tr "$INBOX_DIR/$agent"/*.md 2>/dev/null); do
+        if grep -q "^from: $expected_sender\$" "$msg" 2>/dev/null; then
+          return 0
+        fi
+      done
+    elif has_messages "$agent"; then
+      return 0
+    fi
     sleep "$POLL_INTERVAL"
     elapsed=$((elapsed + POLL_INTERVAL))
     if [ "$elapsed" -ge "$timeout" ]; then
-      log_event "$agent" "timeout" "No message received in ${timeout}s"
+      log_event "$agent" "timeout" "No message received in ${timeout}s${expected_sender:+ (from $expected_sender)}"
       return 1
     fi
   done

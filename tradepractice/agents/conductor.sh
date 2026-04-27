@@ -4,7 +4,12 @@
 # Each cycle targets one project (alternating freqtrade / polymarket)
 # Knowledge accumulates across windows
 
-set -euo pipefail
+# set -e removed 2026-04-25: new-charter analyst output uses YAML frontmatter +
+# '**Prim:**' style hand-offs. extract_prim_name/level return defaults instead of
+# matches, and some downstream grep|head pipelines SIGPIPE under strict pipefail.
+# We keep set -u (catch undefined vars) but drop -e and pipefail so the loop
+# completes all MAX_CYCLES cycles instead of dying silently after cycle 1.
+set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../config.sh"
 source "$SCRIPT_DIR/../lib/queue.sh"
@@ -15,36 +20,54 @@ if [ -f "$BRIEF_FILE" ]; then
   brief_content="$(cat "$BRIEF_FILE")"
 fi
 
-# ── Load accumulated knowledge ──
+# ── Load accumulated knowledge (summary-only to stay within context) ──
+# The library is ~2MB of prim markdown; catting it all blows the Claude
+# context window ("Prompt is too long"). Emit one-line summaries per prim
+# (name + level + parent + axis tag if present). Full prim content is
+# already committed to git + on disk for the implementer to open on demand.
 load_knowledge() {
   local project="$1"
   local knowledge=""
 
-  # Load existing prims (structured knowledge)
   for level in naive intermediate sophisticated; do
     local pdir="$KNOWLEDGE_DIR/$project/prims/$level"
     if [ -d "$pdir" ] && [ "$(ls -A "$pdir" 2>/dev/null)" ]; then
       knowledge+="## Existing $level prims\n"
       for f in "$pdir"/*.md; do
         [ -f "$f" ] || continue
-        knowledge+="$(cat "$f")\n\n"
+        local name axis parent
+        name="$(grep -m1 '^## Prim:' "$f" | sed 's/^## Prim:[[:space:]]*//')"
+        [ -z "$name" ] && name="$(basename "$f" .md)"
+        axis="$(grep -m1 '^\*\*Axis:\*\*\|^axis:' "$f" | sed 's/.*[[:space:]]//')"
+        parent="$(grep -m1 '^\*\*Parent:\*\*' "$f" | sed 's/^\*\*Parent:\*\*[[:space:]]*//')"
+        knowledge+="- $name"
+        [ -n "$axis" ] && [ "$axis" != "none" ] && knowledge+=" [axis:$axis]"
+        [ -n "$parent" ] && [ "$parent" != "none" ] && knowledge+=" (parent:$parent)"
+        knowledge+="\n"
       done
+      knowledge+="\n"
     fi
   done
 
-  # Load conditions log
+  # Conditions log has grown to ~580KB; tail only recent entries to
+  # keep the prompt under Claude's context cap.
   if [ -f "$KNOWLEDGE_DIR/conditions-log.md" ]; then
-    knowledge+="\n## Conditions Log\n"
-    knowledge+="$(cat "$KNOWLEDGE_DIR/conditions-log.md")\n"
+    knowledge+="\n## Conditions Log (tail, last ~5KB)\n"
+    knowledge+="$(tail -c 5000 "$KNOWLEDGE_DIR/conditions-log.md")\n"
   fi
 
-  # Load raw research findings
+  # Raw research — only include titles + date-sorted most-recent 10
   local kdir="$KNOWLEDGE_DIR/$project"
-  for f in "$kdir"/*.md; do
-    [ -f "$f" ] || continue
-    knowledge+="\n## Research: $(basename "$f" .md)\n"
-    knowledge+="$(cat "$f")\n"
-  done
+  if [ -d "$kdir" ]; then
+    local recent
+    recent=$(ls -t "$kdir"/*.md 2>/dev/null | head -10)
+    if [ -n "$recent" ]; then
+      knowledge+="\n## Recent Research (last 10)\n"
+      for f in $recent; do
+        knowledge+="- $(basename "$f" .md)\n"
+      done
+    fi
+  fi
 
   echo -e "$knowledge"
 }
@@ -103,6 +126,17 @@ echo ""
 # Projects alternate each cycle
 PROJECTS=("freqtrade" "polymarket")
 PROJECT_DIRS=("$FREQTRADE_DIR" "$POLYMARKET_DIR")
+
+# ── Pre-loop inbox drain ──
+# Discard any messages left in the conductor inbox from prior runs (orphan
+# analyst/implementer results, queue-cross artifacts). Source-filtered consume
+# already drains within a run; this handles cross-run contamination.
+PRE_DRAIN_COUNT=$(ls -1 "$INBOX_DIR/conductor"/*.md 2>/dev/null | wc -l)
+if [ "$PRE_DRAIN_COUNT" -gt 0 ]; then
+  rm -f "$INBOX_DIR/conductor"/*.md
+  log_event "conductor" "drain" "discarded $PRE_DRAIN_COUNT stale msgs at startup"
+  echo "  Drained $PRE_DRAIN_COUNT stale messages from conductor inbox."
+fi
 
 # ── MAIN LOOP ──
 while is_running; do
@@ -194,13 +228,20 @@ Output ONE prim at the appropriate level."
 
   enqueue "analyst" "conductor" "analyst-${project}-cycle-${cycle}" "$analyst_task"
 
-  if ! wait_for_message "conductor" 600; then
+  # Raised 2026-04-25 from 600s → 1800s: new charter analyst workload includes
+  # pre-flight + Obsidian writes (Prims/Experiments/Daily) + cycle mode log append.
+  # Typical sonnet runtime is 7-12 min; 600s was producing false timeouts.
+  # Source filter added 2026-04-26: only count analyst-sourced messages so a
+  # late-arriving implementer-result from a prior cycle can't satisfy the wait.
+  if ! wait_for_message "conductor" 1800 "analyst"; then
     echo "  Analyst timed out."
     log_event "conductor" "timeout" "analyst $project"
     continue
   fi
 
-  analyst_result="$(consume "conductor")"
+  # Source-filtered consume: drains any non-analyst stale messages and returns
+  # the oldest analyst-sourced result. Pairs with wait_for_message above.
+  analyst_result="$(consume "conductor" "analyst")"
   echo "  Analyst delivered finding."
   echo "$analyst_result" | grep -E "^## Prim:|^## Finding:|^### Rule|^### Key Insight" | head -2 | sed 's/^/    /' || true
 
@@ -255,13 +296,13 @@ If the finding is purely research (no code change needed), output SKIP."
 
   enqueue "implementer" "conductor" "implement-${project}-cycle-${cycle}" "$implement_task"
 
-  if ! wait_for_message "conductor" 900; then
+  if ! wait_for_message "conductor" 900 "implementer"; then
     echo "  Implementer timed out."
     log_event "conductor" "timeout" "implementer $project"
     continue
   fi
 
-  impl_result="$(consume "conductor")"
+  impl_result="$(consume "conductor" "implementer")"
 
   if echo "$impl_result" | grep -qi "SKIP"; then
     echo "  Implementer: research-only finding, no code change."
