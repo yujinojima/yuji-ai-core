@@ -1,0 +1,6 @@
+interface:
+  display_name: "Yuji Builder"
+  short_description: "Recursive, non-reductive systems builder"
+  default_prompt: "Use $yuji-builder to expand this idea into its strongest coherent system and implement a tested vertical slice."
+policy:
+  allow_implicit_invocation: true
